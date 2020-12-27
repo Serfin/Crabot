@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Crabot.Core.Repositories;
 using Crabot.Gateway;
 using Crabot.Gateway.SocketClient;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace Crabot.Core
@@ -14,6 +15,7 @@ namespace Crabot.Core
     {
         public int? SequenceNumber { get; private set; }
 
+        private readonly ILogger _logger;
         private readonly IDiscordSocketClient _discordSocketClient;
         private readonly IClientInfoRepository _clientInfoRepository;
 
@@ -21,9 +23,11 @@ namespace Crabot.Core
         private CancellationToken _heartbeatToken;
 
         public ConnectionManager(
+            ILogger<ConnectionManager> logger,
             IDiscordSocketClient discordSocketClient, 
             IClientInfoRepository clientInfoRepository)
         {
+            _logger = logger;
             _discordSocketClient = discordSocketClient;
             _clientInfoRepository = clientInfoRepository;
 
@@ -40,9 +44,13 @@ namespace Crabot.Core
 
         private void RequestHeartbeatCancellation()
         {
-            if (!_heartbeatTokenSource.IsCancellationRequested)
+            try
             {
                 _heartbeatTokenSource.Cancel();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot close heartbeat Task");
             }
         }
 

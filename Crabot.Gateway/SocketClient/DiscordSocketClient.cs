@@ -55,9 +55,13 @@ namespace Crabot.Gateway.SocketClient
 
         private void RequestListeningCancellation()
         {
-            if (_cancelToken.CanBeCanceled)
+            try
             {
                 _cancelTokenSource.Cancel();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot close listening Task");
             }
         }
 
