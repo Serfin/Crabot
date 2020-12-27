@@ -10,15 +10,15 @@ namespace Crabot.Gateway.SocketClient
 {
     public class DiscordSocketClient : IDiscordSocketClient
     {
-        public int? SequenceNumber { get; set; }
-
         public const int ReceiveChunkSize = 16 * 1024; //16KB
         private CancellationTokenSource _disconnectTokenSource, _cancelTokenSource;
         private CancellationToken _cancelToken, _parentToken;
         private ClientWebSocket _client;
         private Task _task;
-        public event Func<GatewayPayload, Task> TextMessage;
+        public event Func<GatewayPayload, Task> MessageReceive;
         private readonly ILogger _logger;
+
+        private Uri _gatewayAddress;
 
         public DiscordSocketClient(ILogger<DiscordSocketClient> logger)
         {
@@ -35,14 +35,25 @@ namespace Crabot.Gateway.SocketClient
                 _disconnectTokenSource.Token);
             _cancelToken = _cancelTokenSource.Token;
 
+
             _logger.LogInformation("Connecting to Gateway...");
 
+            _gatewayAddress = new Uri(address);
+
             // Connect to the socket and start listening
-            await _client.ConnectAsync(new Uri(address), _cancelToken);
-            _task = RunAsync(_cancelToken);
+            await _client.ConnectAsync(_gatewayAddress, _cancelToken);
+            _task = StartListeningAsync(_cancelToken);
         }
 
-        public void RequestCancellation()
+        public async Task ReconnectAsync()
+        {
+            RequestListeningCancellation();
+
+            await _client.ConnectAsync(_gatewayAddress, _cancelToken);
+            _task = StartListeningAsync(_cancelToken);
+        }
+
+        private void RequestListeningCancellation()
         {
             if (_cancelToken.CanBeCanceled)
             {
@@ -50,7 +61,7 @@ namespace Crabot.Gateway.SocketClient
             }
         }
 
-        public async Task RunAsync(CancellationToken cancellationToken)
+        public async Task StartListeningAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Listening on Gateway socket...");
             try
@@ -70,10 +81,8 @@ namespace Crabot.Gateway.SocketClient
 
                     string text = Encoding.UTF8.GetString(dataBufferBytes.Array, 0, socketResult.Count);
                     var gatewayPayload = JsonConvert.DeserializeObject<GatewayPayload>(text);
-
-                    SequenceNumber = gatewayPayload.SequenceNumber;
-
-                    await TextMessage(gatewayPayload);
+                    
+                    await MessageReceive(gatewayPayload);
                 }
             }
             catch (Exception ex)

@@ -1,9 +1,8 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
 using Crabot.Commands.Dispatcher;
-using Crabot.Commands.Handlers;
-using Crabot.Commands.Models;
-using Crabot.Repositories;
+using Crabot.Core;
+using Crabot.Core.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -38,6 +37,7 @@ namespace Crabot
             services.AddGatewayEventHandlers();
             services.AddCommandHandlers();
 
+            services.AddSingleton<IConnectionManager, ConnectionManager>();
             services.AddTransient<IGuildRepository, GuildRepository>();
             services.AddTransient<IClientInfoRepository, ClientInfoRepository>();
 

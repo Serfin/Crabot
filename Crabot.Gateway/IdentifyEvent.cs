@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace Crabot
+namespace Crabot.Gateway
 {
     public class IdentifyEvent : IGatewayEvent
     {

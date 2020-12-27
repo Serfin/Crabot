@@ -1,6 +1,6 @@
 ﻿using Crabot.Contracts;
 
-namespace Crabot.Repositories
+namespace Crabot.Core.Repositories
 {
     public interface IGuildRepository
     {

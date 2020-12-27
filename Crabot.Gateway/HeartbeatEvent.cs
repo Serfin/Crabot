@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Crabot
+namespace Crabot.Gateway
 {
     public class HeartbeatEvent : IGatewayEvent
     {

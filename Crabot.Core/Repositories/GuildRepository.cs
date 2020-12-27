@@ -2,7 +2,7 @@
 using Crabot.Contracts;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace Crabot.Repositories
+namespace Crabot.Core.Repositories
 {
     public class GuildRepository : IGuildRepository
     {

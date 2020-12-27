@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Crabot.Commands.Dispatcher;
 using Crabot.Commands.Models;
-using Crabot.Repositories;
+using Crabot.Core.Repositories;
 using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Handlers

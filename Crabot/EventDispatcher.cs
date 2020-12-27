@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Crabot.Contracts;
+using Crabot.Core;
 using Crabot.Gateway;
 using Crabot.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,13 +16,16 @@ namespace Crabot
 
         private readonly ILogger _logger;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IConnectionManager _connectionManager;
 
         public EventDispatcher(
             ILogger<EventDispatcher> logger,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            IConnectionManager connectionManager)
         {
             _logger = logger;
             _serviceProvider = serviceProvider;
+            _connectionManager = connectionManager;
         }
 
         public async Task DispatchEvent(GatewayPayload @event)
@@ -35,6 +39,8 @@ namespace Crabot
             {
                 _logger.LogInformation($"[{@event.Opcode} - {@event.EventName}] \n [{@event.EventData}]");
             }
+
+            _connectionManager.SetSequenceNumber(@event.SequenceNumber);
 
             switch (@event.Opcode)
             {
@@ -61,24 +67,13 @@ namespace Crabot
 
                     break;
                 case GatewayOpCode.Hello:
-                    await _serviceProvider.GetRequiredService<IGatewayEventHandler<IdentifyEvent>>()
-                        .HandleAsync(@event.EventData);
-                    await _serviceProvider.GetRequiredService<IGatewayEventHandler<HeartbeatEvent>>()
-                        .HandleAsync(@event);
+                    await _connectionManager.CreateConnection(@event);
                     break;
                 case GatewayOpCode.Reconnect:
-                    await _serviceProvider.GetRequiredService<IGatewayEventHandler<ResumeEvent>>()
-                        .HandleAsync(@event);
-                    _logger.LogInformation($"[{@event.Opcode} - {@event.EventName}] \n [{@event.EventData}]");
+                    await _connectionManager.CreateConnection(@event);
                     break;
                 case GatewayOpCode.InvalidSession:
                     _logger.LogWarning("Cannot resume session! Starting new session!");
-                    await _serviceProvider.GetRequiredService<IGatewayEventHandler<IdentifyEvent>>()
-                        .HandleAsync(@event.EventData);
-                    _logger.LogInformation("New session started!");
-                    break;
-                case GatewayOpCode.Resume:
-                    _logger.LogInformation("Existing session resumed!");
                     break;
                 case GatewayOpCode.HeartbeatAck:
                     _logger.LogInformation("Session prolongate successful!");

@@ -33,12 +33,9 @@ namespace Crabot
 
         internal static void AddGatewayEventHandlers(this IServiceCollection services)
         {
-            services.AddTransient<IGatewayEventHandler<IdentifyEvent>, IdentifyEventHandler>();
-            services.AddTransient<IGatewayEventHandler<HeartbeatEvent>, HeartbeatEventHandler>();
             services.AddTransient<IGatewayEventHandler<MessageCreatedEvent>, MessageCreatedEventHandler>();
             services.AddTransient<IGatewayEventHandler<ReadyEvent>, ReadyEventHandler>();
             services.AddTransient<IGatewayEventHandler<Guild>, GuildCreateEventHandler>();
-            services.AddTransient<IGatewayEventHandler<ResumeEvent>, ResumeEventHandler>();
         }
 
         internal static void AddCommandHandlers(this IServiceCollection services)

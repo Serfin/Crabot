@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Crabot.Commands.Dispatcher;
 using Crabot.Contracts;
-using Crabot.Repositories;
+using Crabot.Core.Repositories;
 using Newtonsoft.Json;
 
 namespace Crabot.EventHandlers
