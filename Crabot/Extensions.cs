@@ -21,8 +21,8 @@ namespace Crabot
             {
                 config.BaseAddress = new Uri(string.Format(configuration["discordApiUrl"], 
                     configuration["discordApiVersion"]));
-                config.DefaultRequestHeaders.Add("Authorization", string.Format("Bot {0}", 
-                    configuration["botSecret"]));
+                config.DefaultRequestHeaders.Add("Authorization", string.Format("Bot {0}",
+                    Environment.GetEnvironmentVariable("BOT_TOKEN")));
             });
         }
 

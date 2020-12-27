@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Crabot.Gateway;
@@ -10,15 +11,12 @@ namespace Crabot
 {
     public class IdentifyEventHandler : IGatewayEventHandler<IdentifyEvent>
     {
-        private readonly IConfiguration _configuration;
         private readonly IDiscordSocketClient _discordSocketClient;
 
         public IdentifyEventHandler(
-            IConfiguration configuration, 
             IDiscordSocketClient discordSocketClient)
         {
             _discordSocketClient = discordSocketClient;
-            _configuration = configuration;
         }
 
         public async Task HandleAsync(object @event)
@@ -28,7 +26,7 @@ namespace Crabot
                 Opcode = GatewayOpCode.Identify,
                 EventData = new IdentifyEvent
                 {
-                    Token = _configuration["botSecret"],
+                    Token = Environment.GetEnvironmentVariable("BOT_TOKEN"),
                     Intents = 513,
                     Compress = false,
                     Properties = new Dictionary<string, string> {
