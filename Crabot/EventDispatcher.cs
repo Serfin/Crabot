@@ -4,6 +4,7 @@ using Crabot.Contracts;
 using Crabot.Core;
 using Crabot.Gateway;
 using Crabot.Models;
+using Crabot.Rest.RestClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -18,14 +19,19 @@ namespace Crabot
         private readonly IServiceProvider _serviceProvider;
         private readonly IConnectionManager _connectionManager;
 
+        // Temp logging
+        private readonly IDiscordRestClient _discordRestClient;
+
         public EventDispatcher(
             ILogger<EventDispatcher> logger,
             IServiceProvider serviceProvider,
-            IConnectionManager connectionManager)
+            IConnectionManager connectionManager,
+            IDiscordRestClient discordRestClient)
         {
             _logger = logger;
             _serviceProvider = serviceProvider;
             _connectionManager = connectionManager;
+            _discordRestClient = discordRestClient;
         }
 
         public async Task DispatchEvent(GatewayPayload @event)
@@ -70,9 +76,11 @@ namespace Crabot
                     await _connectionManager.CreateConnection(@event);
                     break;
                 case GatewayOpCode.Reconnect:
+                    await _discordRestClient.PostMessage("764840399696822322", "Server requesting reconnect - " + @event?.EventData?.ToString());
                     await _connectionManager.CreateConnection(@event);
                     break;
                 case GatewayOpCode.InvalidSession:
+                    await _discordRestClient.PostMessage("764840399696822322", "Invalid session!. Server requesting new session - " + @event?.EventData?.ToString());
                     _logger.LogWarning("Cannot resume session! Starting new session!");
                     break;
                 case GatewayOpCode.HeartbeatAck:
