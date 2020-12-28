@@ -14,6 +14,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.10" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Crabot.CommandProcessor\Crabot.Commands.csproj" />
     <ProjectReference Include="..\Crabot.Contracts\Crabot.Contracts.csproj" />
     <ProjectReference Include="..\Crabot.Core\Crabot.Core.csproj" />
     <ProjectReference Include="..\Crabot.Gateway\Crabot.Gateway.csproj" />

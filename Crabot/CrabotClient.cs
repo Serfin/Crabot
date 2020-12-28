@@ -1,31 +1,20 @@
 ﻿using System.Threading.Tasks;
-using Crabot.Gateway.SocketClient;
-using Crabot.Rest.RestClient;
+using Crabot.Gateway;
 
 namespace Crabot
 {
     public class CrabotClient
     {
-        private readonly IDiscordRestClient _discordRestClient;
-        private readonly IDiscordSocketClient _discordSocketClient;
-        private readonly IEventDispatcher _eventDispatcher;
+        private readonly DiscordGatewayClient _discordGatewayClient;
 
-        public CrabotClient(
-            IDiscordRestClient discordRestClient,
-            IDiscordSocketClient discordSocketClient,
-            IEventDispatcher eventDispatcher)
+        public CrabotClient(DiscordGatewayClient discordGatewayClient)
         {
-            _discordRestClient = discordRestClient;
-            _discordSocketClient = discordSocketClient;
-            _eventDispatcher = eventDispatcher;
+            _discordGatewayClient = discordGatewayClient;
         }
 
         public async Task StartAsync()
         {
-            _discordSocketClient.MessageReceive += _eventDispatcher.DispatchEvent;
-
-            var gatewayUrl = await _discordRestClient.GetGatewayUrlAsync();
-            await _discordSocketClient.ConnectAsync(gatewayUrl);
+            await _discordGatewayClient.StartAsync();
         }
     }
 }

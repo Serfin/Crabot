@@ -3,7 +3,7 @@ using Crabot.Contracts;
 using Crabot.Core.Repositories;
 using Newtonsoft.Json;
 
-namespace Crabot
+namespace Crabot.Gateway.EventHandlers
 {
     public class GuildCreateEventHandler : IGatewayEventHandler<Guild>
     {

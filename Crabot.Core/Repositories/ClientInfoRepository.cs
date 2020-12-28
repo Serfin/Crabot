@@ -30,5 +30,15 @@ namespace Crabot.Core.Repositories
         {
             return _memoryCache.Get<ClientInfo>(ClientInfoCacheKey);
         }
+
+        public void DeleteClientInfo()
+        {
+            var clientInfo = _memoryCache.Get<ClientInfo>(ClientInfoCacheKey);
+
+            if (clientInfo != null)
+            {
+                _memoryCache.Remove(ClientInfoCacheKey);
+            }
+        }
     }
 }

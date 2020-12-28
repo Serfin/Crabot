@@ -1,44 +1,44 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Crabot.Commands;
 using Crabot.Contracts;
-using Crabot.Core;
-using Crabot.Gateway;
-using Crabot.Models;
-using Crabot.Rest.RestClient;
+using Crabot.Core.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Crabot
+namespace Crabot.Gateway
 {
-    public class EventDispatcher : IEventDispatcher
+    public class GatewayEventDispatcher : IGatewayEventDispatcher
     {
         static bool debugLoggingShort = true;
         static bool debugLoggingFull = false;
 
         private readonly ILogger _logger;
+        private readonly ICommandProcessor _commandProcessor;
         private readonly IServiceProvider _serviceProvider;
-        private readonly IConnectionManager _connectionManager;
 
-        // Temp logging
-        private readonly IDiscordRestClient _discordRestClient;
-
-        public EventDispatcher(
-            ILogger<EventDispatcher> logger,
-            IServiceProvider serviceProvider,
-            IConnectionManager connectionManager,
-            IDiscordRestClient discordRestClient)
+        public GatewayEventDispatcher(
+            ILogger<GatewayEventDispatcher> logger, 
+            ICommandProcessor commandProcessor, 
+            IServiceProvider serviceProvider)
         {
             _logger = logger;
+            _commandProcessor = commandProcessor;
             _serviceProvider = serviceProvider;
-            _connectionManager = connectionManager;
-            _discordRestClient = discordRestClient;
         }
 
         public async Task DispatchEvent(GatewayPayload @event)
         {
             if (debugLoggingShort)
             {
-                _logger.LogInformation($"[{@event.Opcode} - {@event.EventName}]");
+                if (!string.IsNullOrEmpty(@event.EventName))
+                {
+                    _logger.LogInformation($"[{@event.Opcode} - {@event.EventName}]");
+                }
+                else
+                {
+                    _logger.LogInformation($"[{@event.Opcode}]");
+                }
             }
 
             if (debugLoggingFull)
@@ -46,15 +46,12 @@ namespace Crabot
                 _logger.LogInformation($"[{@event.Opcode} - {@event.EventName}] \n [{@event.EventData}]");
             }
 
-            _connectionManager.SetSequenceNumber(@event.SequenceNumber);
-
             switch (@event.Opcode)
             {
                 case GatewayOpCode.Dispatch:
                     if (@event.EventName == "MESSAGE_CREATE")
                     {
-                        await _serviceProvider.GetRequiredService<IGatewayEventHandler<MessageCreatedEvent>>()
-                            .HandleAsync(@event.EventData);
+                        await _commandProcessor.ProcessMessageAsync(@event);
                     }
                     else if (@event.EventName == "GUILD_CREATE")
                     {
@@ -70,17 +67,17 @@ namespace Crabot
                     {
                         _logger.LogWarning($"Unhandled event received [{@event.Opcode} - {@event.EventName}] - [{@event.EventData}]");
                     }
-
                     break;
                 case GatewayOpCode.Hello:
-                    await _connectionManager.CreateConnection(@event);
+                    await _serviceProvider.GetRequiredService<IGatewayEventHandler<HeartbeatEvent>>()
+                            .HandleAsync(@event.EventData);
                     break;
                 case GatewayOpCode.Reconnect:
-                    await _discordRestClient.PostMessage("764840399696822322", "Server requesting reconnect - " + @event?.EventData?.ToString());
-                    await _connectionManager.CreateConnection(@event);
+                    _logger.LogWarning("Server requesting reconnect");
+                    await _serviceProvider.GetRequiredService<IGatewayEventHandler<ReconnectEvent>>()
+                            .HandleAsync(@event.EventData);
                     break;
                 case GatewayOpCode.InvalidSession:
-                    await _discordRestClient.PostMessage("764840399696822322", "Invalid session!. Server requesting new session - " + @event?.EventData?.ToString());
                     _logger.LogWarning("Cannot resume session! Starting new session!");
                     break;
                 case GatewayOpCode.HeartbeatAck:

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Crabot.Models
+namespace Crabot.Core.Events
 {
     public class ReadyEvent : IGatewayEvent
     {

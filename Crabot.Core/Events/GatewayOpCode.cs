@@ -1,4 +1,4 @@
-﻿namespace Crabot.Gateway
+﻿namespace Crabot.Core.Events
 {
     public enum GatewayOpCode
     {

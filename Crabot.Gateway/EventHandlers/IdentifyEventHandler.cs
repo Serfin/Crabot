@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using Crabot.Gateway;
-using Crabot.Gateway.SocketClient;
-using Microsoft.Extensions.Configuration;
+using Crabot.Core.Events;
+using Crabot.WebSocket;
 using Newtonsoft.Json;
 
-namespace Crabot
+namespace Crabot.Gateway.EventHandlers
 {
     public class IdentifyEventHandler : IGatewayEventHandler<IdentifyEvent>
     {

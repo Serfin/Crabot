@@ -6,5 +6,6 @@ namespace Crabot.Core.Repositories
     {
         void AddClientInfo(ClientInfo clientInfo);
         ClientInfo GetClientInfo();
+        void DeleteClientInfo();
     }
 }

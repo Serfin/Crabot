@@ -4,9 +4,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
-namespace Crabot.Gateway.SocketClient
+namespace Crabot.WebSocket
 {
     public class DiscordSocketClient : IDiscordSocketClient
     {
@@ -15,49 +14,62 @@ namespace Crabot.Gateway.SocketClient
         private CancellationToken _cancelToken, _parentToken;
         private ClientWebSocket _client;
         private Task _task;
-        public event Func<GatewayPayload, Task> MessageReceive;
+        public event Func<string, Task> MessageReceive;
         private readonly ILogger _logger;
-
-        private Uri _gatewayAddress;
 
         public DiscordSocketClient(ILogger<DiscordSocketClient> logger)
         {
             _logger = logger;
+
             _cancelToken = CancellationToken.None;
             _parentToken = CancellationToken.None;
         }
 
-        public async Task ConnectAsync(string address)
+        public async Task ConnectAsync(Uri address)
         {
-            _client = new ClientWebSocket();
-            _disconnectTokenSource = new CancellationTokenSource();
-            _cancelTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_parentToken, 
-                _disconnectTokenSource.Token);
-            _cancelToken = _cancelTokenSource.Token;
+            try
+            {
+                _client = new ClientWebSocket();
+                _disconnectTokenSource = new CancellationTokenSource();
+                _cancelTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_parentToken, 
+                    _disconnectTokenSource.Token);
+                _cancelToken = _cancelTokenSource.Token;
 
+                _logger.LogInformation("Connecting to Gateway...");
 
-            _logger.LogInformation("Connecting to Gateway...");
-
-            _gatewayAddress = new Uri(address);
-
-            // Connect to the socket and start listening
-            await _client.ConnectAsync(_gatewayAddress, _cancelToken);
-            _task = StartListeningAsync(_cancelToken);
+                // Connect to the socket and start listening
+                await _client.ConnectAsync(address, _cancelToken);
+                _task = StartListeningAsync(_cancelToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during connection opening!");
+            }
         }
 
-        public async Task ReconnectAsync()
+        public async Task CloseAsync()
         {
-            RequestListeningCancellation();
+            try
+            {
+                _logger.LogWarning("Closing existing connection!");
+                await _client.CloseAsync(WebSocketCloseStatus.EndpointUnavailable, 
+                    "Client requested reconnect!", _cancelToken);
+                RequestListeningCancellation();
 
-            await _client.ConnectAsync(_gatewayAddress, _cancelToken);
-            _task = StartListeningAsync(_cancelToken);
+                _client.Dispose();
+                _client = null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during closing conncetion!");
+            }
         }
 
         private void RequestListeningCancellation()
         {
             try
             {
-                _cancelTokenSource.Cancel();
+                _cancelTokenSource.Cancel(false);
             }
             catch (Exception ex)
             {
@@ -84,9 +96,8 @@ namespace Crabot.Gateway.SocketClient
                     }
 
                     string text = Encoding.UTF8.GetString(dataBufferBytes.Array, 0, socketResult.Count);
-                    var gatewayPayload = JsonConvert.DeserializeObject<GatewayPayload>(text);
                     
-                    await MessageReceive(gatewayPayload);
+                    await MessageReceive(text);
                 }
             }
             catch (Exception ex)

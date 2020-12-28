@@ -1,9 +1,9 @@
 ﻿using System.Threading.Tasks;
-using Crabot.Gateway;
+using Crabot.Core.Events;
 
-namespace Crabot
+namespace Crabot.Gateway
 {
-    public interface IEventDispatcher
+    public interface IGatewayEventDispatcher
     {
         Task DispatchEvent(GatewayPayload @event);
     }

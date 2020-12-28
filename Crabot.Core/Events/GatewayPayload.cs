@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Crabot.Gateway
+namespace Crabot.Core.Events
 {
     public class GatewayPayload
     {

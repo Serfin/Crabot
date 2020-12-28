@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Crabot.Core.Events;
 using Crabot.Core.Repositories;
-using Crabot.Gateway;
-using Crabot.Gateway.SocketClient;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace Crabot.Core
+namespace Crabot.WebSocket
 {
     public class ConnectionManager : IConnectionManager
     {
@@ -22,16 +21,28 @@ namespace Crabot.Core
         private CancellationTokenSource _heartbeatTokenSource;
         private CancellationToken _heartbeatToken;
 
+        public event Func<GatewayPayload, Task> EventReceive;
+
+        private readonly SemaphoreSlim _connectionLock = new SemaphoreSlim(1, 1);
+
         public ConnectionManager(
             ILogger<ConnectionManager> logger,
-            IDiscordSocketClient discordSocketClient, 
+            IDiscordSocketClient discordSocketClient,
             IClientInfoRepository clientInfoRepository)
         {
             _logger = logger;
             _discordSocketClient = discordSocketClient;
+            _discordSocketClient.MessageReceive += OnMessageReceive;
             _clientInfoRepository = clientInfoRepository;
-
             _heartbeatToken = CancellationToken.None;
+        }
+
+        private async Task OnMessageReceive(string message)
+        {
+            var payload = JsonConvert.DeserializeObject<GatewayPayload>(message);
+            SetSequenceNumber(payload.SequenceNumber);
+
+            await EventReceive.Invoke(payload);
         }
 
         public void SetSequenceNumber(int? sequenceNumber)
@@ -46,7 +57,8 @@ namespace Crabot.Core
         {
             try
             {
-                _heartbeatTokenSource.Cancel();
+                _logger.LogInformation("Cancelling heartbeat Task!");
+                _heartbeatTokenSource.Cancel(false);
             }
             catch (Exception ex)
             {
@@ -54,8 +66,10 @@ namespace Crabot.Core
             }
         }
 
-        private void RunHeartbeat(int heartbeatInterval)
+        public void RunHeartbeat(int heartbeatInterval)
         {
+            _logger.LogInformation("Starting heartbeat Task! - interval {0}ms", heartbeatInterval);
+
             _heartbeatTokenSource = new CancellationTokenSource();
             _heartbeatToken = _heartbeatTokenSource.Token;
 
@@ -117,31 +131,34 @@ namespace Crabot.Core
             await _discordSocketClient.SendAsync(bytes, true);
         }
 
-        public async Task CreateConnection(GatewayPayload helloEvent)
+        public async Task CreateConnectionAsync(Uri gatewayUri)
         {
-            var clientInfo = _clientInfoRepository.GetClientInfo();
-
-            if (clientInfo?.SessionId != null)
+            await _connectionLock.WaitAsync();
+            try
             {
-                // Resume session
-                RequestHeartbeatCancellation();
-                await _discordSocketClient.ReconnectAsync();
+                var clientInfo = _clientInfoRepository.GetClientInfo();
 
-                var heartbeat = JsonConvert.DeserializeObject<HeartbeatEvent>(
-                    helloEvent.EventData.ToString());
+                if (clientInfo?.SessionId != null)
+                {
+                    // Resume session
+                    RequestHeartbeatCancellation();
 
-                RunHeartbeat(heartbeat.HeartbeatInterval);
-                await IdentifyClient();
-                await ResumeSession(clientInfo.SessionId);
+                    await _discordSocketClient.CloseAsync();
+                    await _discordSocketClient.ConnectAsync(gatewayUri);
+
+                    await IdentifyClient();
+                    await ResumeSession(clientInfo.SessionId);
+                }
+                else
+                {
+                    // Create new session
+                    await _discordSocketClient.ConnectAsync(gatewayUri);
+                    await IdentifyClient();
+                }
             }
-            else
+            finally
             {
-                // Create new session
-                var heartbeat = JsonConvert.DeserializeObject<HeartbeatEvent>(
-                    helloEvent.EventData.ToString());
-
-                RunHeartbeat(heartbeat.HeartbeatInterval);
-                await IdentifyClient();
+                _connectionLock.Release();
             }
         }
     }

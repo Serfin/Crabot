@@ -1,11 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Crabot.Contracts;
-using Crabot.Models;
+using Crabot.Core.Events;
 using Crabot.Core.Repositories;
 using Newtonsoft.Json;
 
-namespace Crabot.EventHandlers
+namespace Crabot.Gateway.EventHandlers
 {
     public class ReadyEventHandler : IGatewayEventHandler<ReadyEvent>
     {
@@ -18,6 +17,11 @@ namespace Crabot.EventHandlers
 
         public async Task HandleAsync(object @event)
         {
+            if (_clientInfoRepository.GetClientInfo() != null)
+            {
+                _clientInfoRepository.DeleteClientInfo();
+            }
+
             _clientInfoRepository.AddClientInfo(JsonConvert.DeserializeObject<ClientInfo>(@event.ToString()));
 
             await Task.CompletedTask;

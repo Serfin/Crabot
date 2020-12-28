@@ -6,11 +6,11 @@
 
   <ItemGroup>
 	<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="3.1.10" />
+	<PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Crabot.Contracts\Crabot.Contracts.csproj" />
-    <ProjectReference Include="..\Crabot.Gateway\Crabot.Gateway.csproj" />
   </ItemGroup>
 
 </Project>

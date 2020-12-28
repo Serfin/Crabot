@@ -1,8 +1,11 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
+using Crabot.Commands;
+using Crabot.Commands.Commands;
 using Crabot.Commands.Dispatcher;
-using Crabot.Core;
 using Crabot.Core.Repositories;
+using Crabot.Gateway;
+using Crabot.WebSocket;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,43 +18,38 @@ namespace Crabot
 
         internal static async Task Main(string[] args)
         {
-            var services = ConfigureServices();
-            var serviceProvider = services.BuildServiceProvider();
-
-            await serviceProvider.GetService<CrabotClient>().StartAsync();
-            await Task.Delay(-1);
+            using (var services = ConfigureServices())
+            {
+                await services.GetService<CrabotClient>().StartAsync();
+                await Task.Delay(-1);
+            }
         }
 
-        private static IServiceCollection ConfigureServices()
-        {
-            IServiceCollection services = new ServiceCollection();
-
-            services.AddLogging(config => config.AddConsole());
-            services.AddSingleton(LoadConfiguration());
-            services.AddSingleton<CrabotClient>();
-            services.AddMemoryCache();
-
-            services.AddTransient<IEventDispatcher, EventDispatcher>();
-            services.AddTransient<ICommandDispatcher, CommandDispatcher>();
-
-            services.AddGatewayEventHandlers();
-            services.AddCommandHandlers();
-
-            services.AddSingleton<IConnectionManager, ConnectionManager>();
-            services.AddTransient<IGuildRepository, GuildRepository>();
-            services.AddTransient<IClientInfoRepository, ClientInfoRepository>();
-
-            services.AddDicordRestClient(_configuration);
-            services.AddDiscordSocketClient();
-
-            return services;
-        }
+        private static ServiceProvider ConfigureServices()
+            => new ServiceCollection()
+                .AddLogging(config => config.AddConsole())
+                .AddSingleton(LoadConfiguration())
+                .AddSingleton<CrabotClient>()
+                .AddSingleton<DiscordGatewayClient>()
+                .AddMemoryCache()
+                .AddTransient<ICommandValidator, CommandValidator>()
+                .AddTransient<ICommandProcessor, CommandProcessor>()
+                .AddTransient<IGatewayEventDispatcher, GatewayEventDispatcher>()
+                .AddTransient<ICommandDispatcher, CommandDispatcher>()
+                .AddGatewayEventHandlers()
+                .AddCommandHandlers()
+                .AddSingleton<IConnectionManager, ConnectionManager>()
+                .AddTransient<IGuildRepository, GuildRepository>()
+                .AddTransient<IClientInfoRepository, ClientInfoRepository>()
+                .AddDicordRestClient(_configuration)
+                .AddDiscordSocketClient()
+                .BuildServiceProvider();
 
         private static IConfiguration LoadConfiguration()
         {
             var builder = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                 .SetBasePath(Directory.GetCurrentDirectory())
+                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
             _configuration = builder.Build();
 
