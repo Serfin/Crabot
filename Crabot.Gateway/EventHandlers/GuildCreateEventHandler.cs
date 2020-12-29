@@ -16,6 +16,13 @@ namespace Crabot.Gateway.EventHandlers
 
         public async Task HandleAsync(object @event)
         {
+            var guild = JsonConvert.DeserializeObject<Guild>(@event.ToString());
+
+            if (_guildRepository.GetGuild(guild.Id) != null)
+            {
+                _guildRepository.DeleteGuild(guild.Id);
+            }
+
             _guildRepository.AddGuild(JsonConvert.DeserializeObject<Guild>(@event.ToString()));
 
             await Task.CompletedTask;

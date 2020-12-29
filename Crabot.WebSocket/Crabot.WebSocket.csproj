@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Crabot.Core\Crabot.Core.csproj" />
+    <ProjectReference Include="..\Crabot.Rest\Crabot.Rest.csproj" />
   </ItemGroup>
 
 </Project>

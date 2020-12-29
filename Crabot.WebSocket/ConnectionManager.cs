@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crabot.Core.Events;
 using Crabot.Core.Repositories;
+using Crabot.Rest.RestClient;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -16,23 +17,25 @@ namespace Crabot.WebSocket
 
         private readonly ILogger _logger;
         private readonly IDiscordSocketClient _discordSocketClient;
+        private readonly IDiscordRestClient _discordRestClient;
         private readonly IClientInfoRepository _clientInfoRepository;
 
         private CancellationTokenSource _heartbeatTokenSource;
         private CancellationToken _heartbeatToken;
+        public Task _heartbeatTask;
 
         public event Func<GatewayPayload, Task> EventReceive;
-
-        private readonly SemaphoreSlim _connectionLock = new SemaphoreSlim(1, 1);
 
         public ConnectionManager(
             ILogger<ConnectionManager> logger,
             IDiscordSocketClient discordSocketClient,
+            IDiscordRestClient discordRestClient,
             IClientInfoRepository clientInfoRepository)
         {
             _logger = logger;
             _discordSocketClient = discordSocketClient;
             _discordSocketClient.MessageReceive += OnMessageReceive;
+            _discordRestClient = discordRestClient;
             _clientInfoRepository = clientInfoRepository;
             _heartbeatToken = CancellationToken.None;
         }
@@ -42,7 +45,27 @@ namespace Crabot.WebSocket
             var payload = JsonConvert.DeserializeObject<GatewayPayload>(message);
             SetSequenceNumber(payload.SequenceNumber);
 
-            await EventReceive.Invoke(payload);
+            if (payload.Opcode == GatewayOpCode.Hello)
+            {
+                var heartbeatInterval = JsonConvert.DeserializeObject<HeartbeatEvent>(
+                   payload.EventData.ToString()).HeartbeatInterval;
+
+                _heartbeatTokenSource = new CancellationTokenSource();
+                _heartbeatToken = _heartbeatTokenSource.Token;
+                _heartbeatTask = RunHeartbeat(heartbeatInterval, _heartbeatToken);
+            }
+            else if (payload.EventData != null && payload.EventData.ToString().Contains("close"))
+            {
+                await _discordRestClient.PostMessage("764840399696822322",
+                    "```[DEBUG C <- S] Server requested reconnect! ```");
+
+                var gatewayUrl = await _discordRestClient.GetGatewayUrlAsync();
+                await CreateConnectionAsync(new Uri(gatewayUrl));
+            }
+            else
+            {
+                await EventReceive.Invoke(payload);
+            }
         }
 
         public void SetSequenceNumber(int? sequenceNumber)
@@ -66,30 +89,30 @@ namespace Crabot.WebSocket
             }
         }
 
-        public void RunHeartbeat(int heartbeatInterval)
+        public async Task RunHeartbeat(int heartbeatInterval, CancellationToken cancelToken)
         {
             _logger.LogInformation("Starting heartbeat Task! - interval {0}ms", heartbeatInterval);
+            await _discordRestClient.PostMessage("764840399696822322", string.Format(
+                "```[DEBUG C -> S] Client started heartbeating! - interval {0}ms ```", heartbeatInterval));
 
-            _heartbeatTokenSource = new CancellationTokenSource();
-            _heartbeatToken = _heartbeatTokenSource.Token;
-
-            _ = Task.Run(async () =>
+            while (!cancelToken.IsCancellationRequested)
             {
-                while (true)
+                var heartbeatEvent = new GatewayPayload
                 {
-                    await Task.Delay(heartbeatInterval);
+                    Opcode = GatewayOpCode.Heartbeat,
+                    EventData = SequenceNumber ?? null,
+                };
 
-                    var heartbeatEvent = new GatewayPayload
-                    {
-                        Opcode = GatewayOpCode.Heartbeat,
-                        EventData = SequenceNumber ?? null,
-                    };
+                var heartbeatEventBytes = Encoding.UTF8.GetBytes(
+                    JsonConvert.SerializeObject(heartbeatEvent));
+                await _discordSocketClient.SendAsync(heartbeatEventBytes, true);
 
-                    var heartbeatEventBytes = Encoding.UTF8.GetBytes(
-                        JsonConvert.SerializeObject(heartbeatEvent));
-                    await _discordSocketClient.SendAsync(heartbeatEventBytes, true);
-                }
-            }, _heartbeatToken);
+                await Task.Delay(heartbeatInterval, cancelToken);
+            }
+
+            _logger.LogInformation("Client stopped heartbeating");
+            await _discordRestClient.PostMessage("764840399696822322",
+                "```[DEBUG C -> S] Client stopped heartbeating!```");
         }
 
         private async Task IdentifyClient()
@@ -133,32 +156,23 @@ namespace Crabot.WebSocket
 
         public async Task CreateConnectionAsync(Uri gatewayUri)
         {
-            await _connectionLock.WaitAsync();
-            try
+            var clientInfo = _clientInfoRepository.GetClientInfo();
+            if (clientInfo?.SessionId != null)
             {
-                var clientInfo = _clientInfoRepository.GetClientInfo();
+                // Resume session
+                RequestHeartbeatCancellation();
+                await _discordSocketClient.DisconnectAsync();
+                await _discordSocketClient.ConnectAsync(gatewayUri);
 
-                if (clientInfo?.SessionId != null)
-                {
-                    // Resume session
-                    RequestHeartbeatCancellation();
-
-                    await _discordSocketClient.CloseAsync();
-                    await _discordSocketClient.ConnectAsync(gatewayUri);
-
-                    await IdentifyClient();
-                    await ResumeSession(clientInfo.SessionId);
-                }
-                else
-                {
-                    // Create new session
-                    await _discordSocketClient.ConnectAsync(gatewayUri);
-                    await IdentifyClient();
-                }
+                await IdentifyClient();
+                await ResumeSession(clientInfo.SessionId);
             }
-            finally
+            else
             {
-                _connectionLock.Release();
+                // Create new session
+                await _discordSocketClient.ConnectAsync(gatewayUri);
+
+                await IdentifyClient();
             }
         }
     }

@@ -40,18 +40,22 @@ namespace Crabot.WebSocket
 
             try
             {
-                _client = new ClientWebSocket();
+                _disconnectTokenSource?.Dispose();
+                _cancelTokenSource?.Dispose();
+
                 _disconnectTokenSource = new CancellationTokenSource();
-                _cancelTokenSource = CancellationTokenSource
-                    .CreateLinkedTokenSource(_parentToken, _disconnectTokenSource.Token);
+                _cancelTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_parentToken, _disconnectTokenSource.Token);
                 _cancelToken = _cancelTokenSource.Token;
+
+                _client?.Dispose();
+                _client = new ClientWebSocket();
 
                 await _client.ConnectAsync(address, _cancelToken);
                 _task = RunAsync(_cancelToken);
             }
             catch (Exception ex)
             {
-                _logger.LogTrace(ex, "Error during connection opening!");
+                _logger.LogError(ex, "Error during connection opening!");
             }
             finally
             {
@@ -73,18 +77,20 @@ namespace Crabot.WebSocket
 
                 _disconnectTokenSource.Cancel(false);
 
-                await _client.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                if (_client != null)
+                {
+                    await _client.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
 
-                _client.Dispose();
-                _client = null;
+                    _client.Dispose();
+                    _client = null;
+                }
 
-                // Make sure to await last received event before disposing.
-                await (_task ?? Task.Delay(0));
+                //await (_task ?? Task.Delay(0));
                 _task = null;
             }
             catch (Exception ex)
             {
-                _logger.LogTrace(ex, "Error during closing conncetion!");
+                _logger.LogError(ex, "Error during closing conncetion!");
             }
             finally
             {
@@ -95,8 +101,8 @@ namespace Crabot.WebSocket
         /// <summary>
         /// Start listening for socket data
         /// </summary>
-        /// <param name="cancelToken"></param>
-        /// <returns></returns>
+        /// <param name="cancelToken">Cancellation token</param>
+        /// <returns>Listen on socket Task</returns>
         public async Task RunAsync(CancellationToken cancelToken)
         {
             _logger.LogInformation("Listening on socket...");
@@ -105,7 +111,7 @@ namespace Crabot.WebSocket
 
             try
             {
-                while (!_cancelToken.IsCancellationRequested)
+                while (!cancelToken.IsCancellationRequested)
                 {
                     WebSocketReceiveResult socketResult = await _client.ReceiveAsync(dataBufferBytes, 
                         CancellationToken.None);
@@ -123,7 +129,7 @@ namespace Crabot.WebSocket
             }
             catch (Exception ex)
             {
-                _logger.LogTrace(new EventId(), ex, "");
+                _logger.LogError(ex, "Cannot start listening on socket");
                 throw;
             }
         }
@@ -134,6 +140,11 @@ namespace Crabot.WebSocket
 
             try
             {
+                if (_client == null)
+                {
+                    return;
+                }
+
                 if (_client.State == WebSocketState.Closed)
                 {
                     throw new WebSocketException((int)_client.CloseStatus, _client.CloseStatusDescription);
@@ -144,9 +155,9 @@ namespace Crabot.WebSocket
 
                 _logger.LogInformation("Sent data - {0}", Encoding.UTF8.GetString(payload));
             }
-            catch
+            catch (Exception ex)
             {
-
+                _logger.LogError(ex, "Error during sending event");
             }
             finally
             {
