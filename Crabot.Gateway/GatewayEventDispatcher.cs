@@ -1,9 +1,9 @@
-﻿using System;
+﻿
+using System;
 using System.Threading.Tasks;
 using Crabot.Commands;
 using Crabot.Contracts;
 using Crabot.Core.Events;
-using Crabot.Rest.RestClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -16,18 +16,15 @@ namespace Crabot.Gateway
 
         private readonly ILogger _logger;
         private readonly ICommandProcessor _commandProcessor;
-        private readonly IDiscordRestClient _discordRestClient;
         private readonly IServiceProvider _serviceProvider;
 
         public GatewayEventDispatcher(
             ILogger<GatewayEventDispatcher> logger, 
-            ICommandProcessor commandProcessor, 
-            IDiscordRestClient discordRestClient,
+            ICommandProcessor commandProcessor,
             IServiceProvider serviceProvider)
         {
             _logger = logger;
             _commandProcessor = commandProcessor;
-            _discordRestClient = discordRestClient;
             _serviceProvider = serviceProvider;
         }
 
@@ -69,30 +66,17 @@ namespace Crabot.Gateway
                     }
                     else
                     {
-                        _logger.LogWarning($"Unhandled event received [{@event.Opcode} - {@event.EventName}] - [{@event.EventData}]");
+                        _logger.LogWarning($"Unhandled event received [{@event.Opcode} - {@event.EventName}]");
                     }
-                    break;
-                case GatewayOpCode.Hello:
-                    await _serviceProvider.GetRequiredService<IGatewayEventHandler<HeartbeatEvent>>()
-                            .HandleAsync(@event.EventData);
-                    await _discordRestClient.PostMessage("764840399696822322", "Heartbeat interval - " + @event.EventData.ToString());
-                    break;
-                case GatewayOpCode.Reconnect:
-                    _logger.LogWarning("Server requesting reconnect");
-                    await _discordRestClient.PostMessage("764840399696822322", "Server requesting reconnect");
-                    await _serviceProvider.GetRequiredService<IGatewayEventHandler<ReconnectEvent>>()
-                            .HandleAsync(@event.EventData);
-                    await _discordRestClient.PostMessage("764840399696822322", "Successfully resumed session!");
                     break;
                 case GatewayOpCode.InvalidSession:
                     _logger.LogWarning("Cannot resume session!");
-                    await _discordRestClient.PostMessage("764840399696822322", "Cannot resume session!");
                     break;
                 case GatewayOpCode.HeartbeatAck:
                     _logger.LogInformation("Session prolongate successful!");
                     break;
                 default:
-                    _logger.LogWarning($"Unhandled event received [{@event.Opcode} - {@event.EventName}] - [{@event.EventData}]");
+                    _logger.LogWarning($"Unhandled event received [{@event.Opcode} - {@event.EventName}]");
                     break;
             }
         }

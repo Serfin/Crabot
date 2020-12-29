@@ -21,6 +21,9 @@ namespace Crabot.Gateway.EventHandlers
 
         public async Task HandleAsync(object @event)
         {
+            await _discordRestClient.PostMessage("764840399696822322",
+                "```[DEBUG C <- S] Server requested reconnect! ```");
+
             var gatewayUrl = await _discordRestClient.GetGatewayUrlAsync();
             await _connectionManager.CreateConnectionAsync(new Uri(gatewayUrl));
         }
