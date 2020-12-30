@@ -27,8 +27,13 @@ namespace Crabot
 
         private static ServiceProvider ConfigureServices()
             => new ServiceCollection()
-                .AddLogging(config => config.AddConsole())
                 .AddSingleton(LoadConfiguration())
+                .AddLogging(builder =>
+                {
+                    builder.ClearProviders();
+                    builder.AddConfiguration(_configuration.GetSection("Logging"));
+                    builder.AddConsole();
+                })
                 .AddSingleton<CrabotClient>()
                 .AddSingleton<DiscordGatewayClient>()
                 .AddMemoryCache()
