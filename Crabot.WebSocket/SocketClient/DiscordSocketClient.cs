@@ -153,7 +153,7 @@ namespace Crabot.WebSocket
                 await _client.SendAsync(new ArraySegment<byte>(payload), WebSocketMessageType.Text,
                     isEoF, _cancelToken);
 
-                _logger.LogInformation("Sent data - {0}", Encoding.UTF8.GetString(payload));
+                _logger.LogInformation("Sending data - {0}", Encoding.UTF8.GetString(payload));
             }
             catch (Exception ex)
             {

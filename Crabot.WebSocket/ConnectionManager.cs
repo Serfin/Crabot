@@ -54,7 +54,7 @@ namespace Crabot.WebSocket
                 _heartbeatToken = _heartbeatTokenSource.Token;
                 _heartbeatTask = RunHeartbeat(heartbeatInterval, _heartbeatToken);
             }
-            else if (payload.EventData != null && payload.EventData.ToString().Contains("close"))
+            else if (payload.Opcode == GatewayOpCode.Reconnect)
             {
                 await _discordRestClient.PostMessage("764840399696822322",
                     "```[DEBUG C <- S] Server requested reconnect! ```");
