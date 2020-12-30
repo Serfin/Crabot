@@ -64,12 +64,12 @@ namespace Crabot.WebSocket
             }
             else if (payload.Opcode == GatewayOpCode.InvalidSession)
             {
-                var conersionSuccess = bool.TryParse(payload.EventData.ToString(), out bool canBeResumed);
+                var conversionSuccess = bool.TryParse(payload.EventData.ToString(), out bool canBeResumed);
 
-                if (conersionSuccess && canBeResumed)
+                if (conversionSuccess && canBeResumed)
                 {
                     await _discordRestClient.PostMessage("764840399696822322",
-                    "```[DEBUG C <- S] Invalid session! - trying to resume! ```");
+                        "```[DEBUG C <- S] Invalid session! - trying to resume! ```");
 
                     var gatewayUrl = await _discordRestClient.GetGatewayUrlAsync();
                     await CreateConnectionAsync(new Uri(gatewayUrl));
@@ -77,7 +77,7 @@ namespace Crabot.WebSocket
                 else
                 {
                     await _discordRestClient.PostMessage("764840399696822322",
-                    "```[DEBUG C <- S] Server refused to resume session! - starting new session ```");
+                        "```[DEBUG C <- S] Server refused to resume session! - starting new session ```");
 
                     // Delete old session id
                     _clientInfoRepository.DeleteClientInfo();

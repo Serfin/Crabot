@@ -1,4 +1,6 @@
 ﻿using System;
+using Crabot.Commands.Commands.Handlers;
+using Crabot.Commands.Commands.Models;
 using Crabot.Commands.Dispatcher;
 using Crabot.Commands.Handlers;
 using Crabot.Commands.Models;
@@ -50,6 +52,7 @@ namespace Crabot
         {
             services.AddTransient<ICommandHandler<PingCommand>, PingCommandHandler>();
             services.AddTransient<ICommandHandler<CommandError>, CommandErrorHandler>();
+            services.AddTransient<ICommandHandler<ChampCommand>, ChampCommandHandler>();
 
             return services;
         }

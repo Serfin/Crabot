@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Crabot.Commands.Commands.Models;
 using Crabot.Commands.Models;
 using Crabot.Contracts;
-using Crabot.Core.Events;
-using Crabot.Core.Repositories;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
 
 namespace Crabot.Commands.Dispatcher
 {
@@ -27,6 +25,10 @@ namespace Crabot.Commands.Dispatcher
 				case "ping":
 					await _serviceProvider.GetService<ICommandHandler<PingCommand>>()
 						.HandleAsync(new PingCommand(message));
+					break;
+				case "champ":
+					await _serviceProvider.GetService<ICommandHandler<ChampCommand>>()
+						.HandleAsync(new ChampCommand(message));
 					break;
 				default:
 					await _serviceProvider.GetService<ICommandHandler<CommandError>>()
