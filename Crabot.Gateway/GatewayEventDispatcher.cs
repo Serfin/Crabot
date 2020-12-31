@@ -11,9 +11,6 @@ namespace Crabot.Gateway
 {
     public class GatewayEventDispatcher : IGatewayEventDispatcher
     {
-        static bool debugLoggingShort = true;
-        static bool debugLoggingFull = false;
-
         private readonly ILogger _logger;
         private readonly ICommandProcessor _commandProcessor;
         private readonly IServiceProvider _serviceProvider;
@@ -30,23 +27,6 @@ namespace Crabot.Gateway
 
         public async Task DispatchEvent(GatewayPayload @event)
         {
-            if (debugLoggingShort)
-            {
-                if (!string.IsNullOrEmpty(@event.EventName))
-                {
-                    _logger.LogInformation($"[{@event.Opcode} - {@event.EventName}]");
-                }
-                else
-                {
-                    _logger.LogInformation($"[{@event.Opcode}]");
-                }
-            }
-
-            if (debugLoggingFull)
-            {
-                _logger.LogInformation($"[{@event.Opcode} - {@event.EventName}] \n [{@event.EventData}]");
-            }
-
             switch (@event.Opcode)
             {
                 case GatewayOpCode.Dispatch:

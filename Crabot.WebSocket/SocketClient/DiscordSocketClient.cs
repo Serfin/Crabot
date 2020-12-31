@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -109,14 +110,17 @@ namespace Crabot.WebSocket
         {
             _logger.LogInformation("Listening on socket...");
 
-            var dataBufferBytes = new ArraySegment<byte>(new byte[ReceiveChunkSize]);
+            // Initial 16KB buffer
+            var messageBuffer = new ArraySegment<byte>(new byte[ReceiveChunkSize]);
 
             try
             {
                 while (!cancelToken.IsCancellationRequested)
                 {
-                    WebSocketReceiveResult socketResult = await _client.ReceiveAsync(dataBufferBytes, 
-                        CancellationToken.None);
+                    WebSocketReceiveResult socketResult = await _client.ReceiveAsync(messageBuffer, CancellationToken.None);
+
+                    byte[] longMessageBuffer;
+                    int bufferLength;
 
                     if (socketResult.MessageType == WebSocketMessageType.Close)
                     {
@@ -124,10 +128,42 @@ namespace Crabot.WebSocket
                             socketResult.CloseStatusDescription);
                     }
 
-                    string text = Encoding.UTF8.GetString(dataBufferBytes.Array, 0, socketResult.Count);
+                    if (!socketResult.EndOfMessage)
+                    {
+                        using (var stream = new MemoryStream())
+                        {
+                            // Write initial 16KB of data to long message buffer
+                            stream.Write(messageBuffer.Array, 0, socketResult.Count);
+
+                            // Append more if there is not socket EOF
+                            do
+                            {
+                                if (cancelToken.IsCancellationRequested)
+                                {
+                                    return;
+                                }
+
+                                socketResult = await _client.ReceiveAsync(messageBuffer, cancelToken).ConfigureAwait(false);
+                                stream.Write(messageBuffer.Array, 0, socketResult.Count);
+                            }
+                            while (socketResult == null || !socketResult.EndOfMessage);
+
+                            bufferLength = (int)stream.Length;
+                            longMessageBuffer = stream.TryGetBuffer(out var streamBuffer) 
+                                ? streamBuffer.Array 
+                                : stream.ToArray();
+
+                        }
+                    }
+                    else
+                    {
+                        bufferLength = socketResult.Count;
+                        longMessageBuffer = messageBuffer.Array;
+                    }
 
                     if (socketResult.MessageType == WebSocketMessageType.Text)
                     {
+                        string text = Encoding.UTF8.GetString(longMessageBuffer, 0, bufferLength);
                         await MessageReceive(text);
                     }
                     else
