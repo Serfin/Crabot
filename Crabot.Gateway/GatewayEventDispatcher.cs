@@ -69,12 +69,6 @@ namespace Crabot.Gateway
                         _logger.LogWarning($"Unhandled event received [{@event.Opcode} - {@event.EventName}]");
                     }
                     break;
-                case GatewayOpCode.InvalidSession:
-                    _logger.LogWarning("Cannot resume session!");
-                    break;
-                case GatewayOpCode.HeartbeatAck:
-                    _logger.LogInformation("Session prolongate successful!");
-                    break;
                 default:
                     _logger.LogWarning($"Unhandled event received [{@event.Opcode} - {@event.EventName}]");
                     break;

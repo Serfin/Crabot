@@ -44,7 +44,8 @@ namespace Crabot.WebSocket
                 _cancelTokenSource?.Dispose();
 
                 _disconnectTokenSource = new CancellationTokenSource();
-                _cancelTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_parentToken, _disconnectTokenSource.Token);
+                _cancelTokenSource = CancellationTokenSource
+                    .CreateLinkedTokenSource(_parentToken, _disconnectTokenSource.Token);
                 _cancelToken = _cancelTokenSource.Token;
 
                 _client?.Dispose();
@@ -75,6 +76,7 @@ namespace Crabot.WebSocket
             {
                 _logger.LogWarning("Closing existing connection!");
 
+                _cancelTokenSource.Cancel(false);
                 _disconnectTokenSource.Cancel(false);
 
                 if (_client != null)
@@ -118,14 +120,26 @@ namespace Crabot.WebSocket
 
                     if (socketResult.MessageType == WebSocketMessageType.Close)
                     {
-                        throw new WebSocketException((int)socketResult.CloseStatus, 
+                        throw new WebSocketException((int)socketResult.CloseStatus,
                             socketResult.CloseStatusDescription);
                     }
 
                     string text = Encoding.UTF8.GetString(dataBufferBytes.Array, 0, socketResult.Count);
-                    
-                    await MessageReceive(text);
+
+                    if (socketResult.MessageType == WebSocketMessageType.Text)
+                    {
+                        await MessageReceive(text);
+                    }
+                    else
+                    {
+                        throw new NotSupportedException("Binary messages are not supperted");
+                    }
                 }
+            }
+            catch (WebSocketException scx)
+            {
+                _logger.LogError(scx, "Socket is in 'Close' state");
+                throw;
             }
             catch (Exception ex)
             {
