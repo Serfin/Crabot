@@ -195,6 +195,7 @@ namespace Crabot.WebSocket
             else
             {
                 // Create new session
+                await _discordSocketClient.DisconnectAsync();
                 await _discordSocketClient.ConnectAsync(gatewayUri);
                 await IdentifyClient();
             }

@@ -75,13 +75,12 @@ namespace Crabot.WebSocket
 
             try
             {
-                _logger.LogWarning("Closing existing connection!");
-
-                _cancelTokenSource.Cancel(false);
-                _disconnectTokenSource.Cancel(false);
-
                 if (_client != null)
                 {
+                    _logger.LogWarning("Closing existing connection!");
+                    _cancelTokenSource.Cancel(false);
+                    _disconnectTokenSource.Cancel(false);
+
                     await _client.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
 
                     _client.Dispose();
