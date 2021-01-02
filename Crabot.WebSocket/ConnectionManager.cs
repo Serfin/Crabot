@@ -87,6 +87,8 @@ namespace Crabot.WebSocket
 
                 if (conversionSuccess && canBeResumed)
                 {
+                    await _discordRestClient.PostMessage("764840399696822322", "```\nSession can be resumed\n```");
+
                     var gatewayUrl = await _discordRestClient.GetGatewayUrlAsync();
                     await CreateConnectionAsync(new Uri(gatewayUrl));
                 }
@@ -94,7 +96,7 @@ namespace Crabot.WebSocket
                 {
                     // Delete old session id
                     _clientInfoRepository.DeleteClientInfo();
-
+                    await _discordRestClient.PostMessage("764840399696822322", "```\nSession cannot be resumed\n```");
                     await Task.Delay(new Random().Next(1, 6) * 1000);
 
                     var gatewayUrl = await _discordRestClient.GetGatewayUrlAsync();
