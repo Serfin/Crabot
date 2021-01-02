@@ -9,6 +9,9 @@ using Crabot.WebSocket;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 
 namespace Crabot
 {
@@ -18,6 +21,8 @@ namespace Crabot
 
         internal static async Task Main(string[] args)
         {
+            ConfigureSerialization();
+
             using (var services = ConfigureServices())
             {
                 await services.GetService<CrabotClient>().StartAsync();
@@ -59,6 +64,18 @@ namespace Crabot
             _configuration = builder.Build();
 
             return _configuration;
+        }
+
+        private static void ConfigureSerialization()
+        {
+            JsonConvert.DefaultSettings = () =>
+            {
+                var settings = new JsonSerializerSettings();
+                settings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                settings.NullValueHandling = NullValueHandling.Ignore;
+
+                return settings;
+            };
         }
     }
 }
