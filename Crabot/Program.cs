@@ -47,7 +47,7 @@ namespace Crabot
                 .AddTransient<IGatewayEventDispatcher, GatewayEventDispatcher>()
                 .AddTransient<ICommandDispatcher, CommandDispatcher>()
                 .AddGatewayEventHandlers()
-                .AddCommandHandlers()
+                .AddCommands()
                 .AddSingleton<IConnectionManager, ConnectionManager>()
                 .AddTransient<IGuildRepository, GuildRepository>()
                 .AddTransient<IClientInfoRepository, ClientInfoRepository>()

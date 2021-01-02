@@ -48,11 +48,12 @@ namespace Crabot
             return services;
         }
 
-        internal static IServiceCollection AddCommandHandlers(this IServiceCollection services)
+        internal static IServiceCollection AddCommands(this IServiceCollection services)
         {
             services.AddTransient<ICommandHandler<PingCommand>, PingCommandHandler>();
             services.AddTransient<ICommandHandler<CommandError>, CommandErrorHandler>();
             services.AddTransient<ICommandHandler<ChampCommand>, ChampCommandHandler>();
+            services.AddTransient<ICommandHandler<HelpCommand>, HelpCommandHandler>();
 
             return services;
         }

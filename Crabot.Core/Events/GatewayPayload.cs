@@ -10,10 +10,10 @@ namespace Crabot.Core.Events
         [JsonProperty("d")]
         public object EventData { get; set; }
 
-        [JsonProperty("s", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("s")]
         public int? SequenceNumber { get; set; }
 
-        [JsonProperty("t", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("t")]
         public string EventName { get; set; }
     }
 }
