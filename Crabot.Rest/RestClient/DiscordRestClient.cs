@@ -47,14 +47,15 @@ namespace Crabot.Rest.RestClient
                 throw;
             }
         }
-
-        public async Task PostMessage(string channelId, string message)
+        
+        public async Task PostMessage(string channelId, Message message)
         {
             try
             {
+                _logger.LogWarning(JsonConvert.SerializeObject(message));
+
                 var response = await _httpClient.PostAsync($"channels/{channelId}/messages", 
-                    new StringContent(JsonConvert.SerializeObject(new Message { Content = message }), 
-                    Encoding.UTF8, "application/json"));
+                    new StringContent(JsonConvert.SerializeObject(message), Encoding.UTF8, "application/json"));
 
                 if (!response.IsSuccessStatusCode)
                 {

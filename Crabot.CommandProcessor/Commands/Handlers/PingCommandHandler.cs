@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Crabot.Commands.Dispatcher;
 using Crabot.Commands.Models;
+using Crabot.Rest.Models;
 using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Handlers
@@ -16,7 +17,8 @@ namespace Crabot.Commands.Handlers
 
         public async Task HandleAsync(PingCommand command)
         {
-            await _discordRestClient.PostMessage(command.Message.ChannelId, "pong");
+            await _discordRestClient.PostMessage(command.Message.ChannelId, 
+                new Message { Content = "pong" });
         }
     }
 }

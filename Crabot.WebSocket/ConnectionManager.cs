@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crabot.Core.Events;
 using Crabot.Core.Repositories;
+using Crabot.Rest.Models;
 using Crabot.Rest.RestClient;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -43,12 +44,14 @@ namespace Crabot.WebSocket
         private async Task OnMessageReceive(string message)
         {
             var payload = JsonConvert.DeserializeObject<GatewayPayload>(message);
+
             SetSequenceNumber(payload.SequenceNumber);
 
             if (payload.Opcode == GatewayOpCode.Hello)
             {
                 _logger.LogInformation("[{0}]", payload.Opcode);
-                await _discordRestClient.PostMessage("764840399696822322", "```\nServer sent [Hello]\n```");
+                await _discordRestClient.PostMessage("764840399696822322", 
+                    new Message { Content = "```\nServer sent [Hello]\n```" });
                 SetCancellationToken();
 
                 var heartbeatInterval = JsonConvert.DeserializeObject<HeartbeatEvent>(
@@ -59,7 +62,8 @@ namespace Crabot.WebSocket
             else if (payload.Opcode == GatewayOpCode.Reconnect)
             {
                 _logger.LogInformation("[{0}]", payload.Opcode);
-                await _discordRestClient.PostMessage("764840399696822322", "```\nServer requested [Reconnect]\n```");
+                await _discordRestClient.PostMessage("764840399696822322", 
+                    new Message { Content = "```\nServer requested [Reconnect]\n```" });
 
                 CloseHeartbeating();
 
@@ -72,13 +76,15 @@ namespace Crabot.WebSocket
             }
             else if (payload.Opcode == GatewayOpCode.Dispatch && payload.EventName == "RESUMED")
             {
-                await _discordRestClient.PostMessage("764840399696822322", "```\nServer sent [Dispatch - RESUMED]\n```");
+                await _discordRestClient.PostMessage("764840399696822322", 
+                    new Message { Content = "```\nServer sent [Dispatch - RESUMED]\n```" });
                 _logger.LogWarning("Session resumed!");
             }
             else if (payload.Opcode == GatewayOpCode.InvalidSession)
             {
                 _logger.LogWarning("Cannot resume session!");
-                await _discordRestClient.PostMessage("764840399696822322", "```\nServer sent [InvalidSession]\n```");
+                await _discordRestClient.PostMessage("764840399696822322", 
+                    new Message { Content = "```\nServer sent [InvalidSession]\n```" });
 
                 _logger.LogInformation("[{0}]", payload.Opcode);
                 CloseHeartbeating();
@@ -87,7 +93,8 @@ namespace Crabot.WebSocket
 
                 if (conversionSuccess && canBeResumed)
                 {
-                    await _discordRestClient.PostMessage("764840399696822322", "```\nSession can be resumed\n```");
+                    await _discordRestClient.PostMessage("764840399696822322", 
+                        new Message { Content = "```\nSession can be resumed\n```" });
 
                     var gatewayUrl = await _discordRestClient.GetGatewayUrlAsync();
                     await CreateConnectionAsync(new Uri(gatewayUrl));
@@ -96,7 +103,8 @@ namespace Crabot.WebSocket
                 {
                     // Delete old session id
                     _clientInfoRepository.DeleteClientInfo();
-                    await _discordRestClient.PostMessage("764840399696822322", "```\nSession cannot be resumed\n```");
+                    await _discordRestClient.PostMessage("764840399696822322", 
+                        new Message { Content = "```\nSession cannot be resumed\n```" });
                     await Task.Delay(new Random().Next(1, 6) * 1000);
 
                     var gatewayUrl = await _discordRestClient.GetGatewayUrlAsync();
@@ -132,8 +140,8 @@ namespace Crabot.WebSocket
         public async Task RunHeartbeat(int heartbeatInterval)
         {
             _logger.LogInformation("Starting heartbeat Task! - interval {0}ms", heartbeatInterval);
-            await _discordRestClient.PostMessage("764840399696822322", 
-                string.Format("```\nStarting heartbeat Task! - interval {0}ms\n```", heartbeatInterval));
+            await _discordRestClient.PostMessage("764840399696822322",
+                new Message { Content = string.Format("```\nStarting heartbeat Task! - interval {0}ms\n```", heartbeatInterval) }) ;
 
             while (!_heartbeatToken.IsCancellationRequested)
             {

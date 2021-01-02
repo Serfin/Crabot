@@ -20,7 +20,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crabot.WebSocket", "..\Crabot.WebSocket\Crabot.WebSocket.csproj", "{F423B802-4C15-47A8-A70E-B34C73E5E82A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crabot.Commands", "..\Crabot.CommandProcessor\Crabot.Commands.csproj", "{C1883827-026A-4713-A4CB-731896815952}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crabot.Commands", "..\Crabot.CommandProcessor\Crabot.Commands.csproj", "{C1883827-026A-4713-A4CB-731896815952}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crabot.MessageExtensions", "..\Crabot.MessageExtensions\Crabot.MessageExtensions.csproj", "{8F2FDCB0-C8F2-4EB8-82D1-1718FFBD006E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -56,6 +58,10 @@ Global
 		{C1883827-026A-4713-A4CB-731896815952}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C1883827-026A-4713-A4CB-731896815952}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C1883827-026A-4713-A4CB-731896815952}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F2FDCB0-C8F2-4EB8-82D1-1718FFBD006E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F2FDCB0-C8F2-4EB8-82D1-1718FFBD006E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F2FDCB0-C8F2-4EB8-82D1-1718FFBD006E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F2FDCB0-C8F2-4EB8-82D1-1718FFBD006E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

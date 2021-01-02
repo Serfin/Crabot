@@ -26,6 +26,10 @@ namespace Crabot.Commands.Dispatcher
 					await _serviceProvider.GetService<ICommandHandler<PingCommand>>()
 						.HandleAsync(new PingCommand(message));
 					break;
+				case "help":
+					await _serviceProvider.GetService<ICommandHandler<HelpCommand>>()
+						.HandleAsync(new HelpCommand(message));
+					break;
 				case "champ":
 					await _serviceProvider.GetService<ICommandHandler<ChampCommand>>()
 						.HandleAsync(new ChampCommand(message));

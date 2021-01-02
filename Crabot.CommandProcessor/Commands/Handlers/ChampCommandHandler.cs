@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Crabot.Commands.Commands.Models;
 using Crabot.Commands.Dispatcher;
 using Crabot.Core.Repositories;
+using Crabot.Rest.Models;
 using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Commands.Handlers
@@ -37,7 +38,8 @@ namespace Crabot.Commands.Commands.Handlers
                         emote.Id);
                 }
 
-                await _discordRestClient.PostMessage(command.Message.ChannelId, stringBuilder.ToString());
+                await _discordRestClient.PostMessage(command.Message.ChannelId, 
+                    new Message { Content = stringBuilder.ToString() });
             }
         }
     }

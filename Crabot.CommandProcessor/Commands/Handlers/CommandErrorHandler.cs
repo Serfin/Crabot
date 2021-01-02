@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Crabot.Commands.Dispatcher;
 using Crabot.Commands.Models;
 using Crabot.Core.Repositories;
+using Crabot.Rest.Models;
 using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Handlers
@@ -25,7 +26,7 @@ namespace Crabot.Commands.Handlers
                 .Emojis.FirstOrDefault(x => x.Name == "SadChamp");
 
             await _discordRestClient.PostMessage(command.Message.ChannelId,
-                $"Command not found! <:{sadChamp.Name}:{sadChamp.Id}>");
+                new Message { Content = $"Command not found! <:{sadChamp.Name}:{sadChamp.Id}>" });
         }
     }
 }

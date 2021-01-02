@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Crabot.Core.Events;
+using Crabot.Rest.Models;
 using Crabot.Rest.RestClient;
 using Crabot.WebSocket;
 
@@ -22,7 +23,7 @@ namespace Crabot.Gateway.EventHandlers
         public async Task HandleAsync(object @event)
         {
             await _discordRestClient.PostMessage("764840399696822322",
-                "```[DEBUG C <- S] Server requested reconnect! ```");
+                new Message { Content = "```[DEBUG C <- S] Server requested reconnect! ```" });
 
             var gatewayUrl = await _discordRestClient.GetGatewayUrlAsync();
             await _connectionManager.CreateConnectionAsync(new Uri(gatewayUrl));

@@ -14,4 +14,8 @@
 	<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.10" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Crabot.MessageExtensions\Crabot.MessageExtensions.csproj" />
+  </ItemGroup>
+
 </Project>

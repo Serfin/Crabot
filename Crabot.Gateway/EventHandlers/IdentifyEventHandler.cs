@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Crabot.Core.Events;
+using Crabot.Rest.Models;
 using Crabot.Rest.RestClient;
 using Crabot.WebSocket;
 using Newtonsoft.Json;
@@ -43,7 +44,7 @@ namespace Crabot.Gateway.EventHandlers
             await _discordSocketClient.SendAsync(bytes, true);
 
             await _discordRestClient.PostMessage("764840399696822322",
-                "``` [DEBUG C -> S] identifying as Crabot! ```");
+                new Message { Content = "``` [DEBUG C -> S] identifying as Crabot! ```" });
         }
     }
 }
