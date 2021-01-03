@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Crabot.MessageExtensions
 {
@@ -11,6 +12,6 @@ namespace Crabot.MessageExtensions
         public DateTimeOffset? Timestamp { get; set; } // Footer datetime
         public EmbedFooter Footer { get; set; }
         public EmbedAuthor Author { get; set; }
-        public EmbedField[] Fields { get; set; }
+        public IEnumerable<EmbedField> Fields { get; set; }
     }
 }

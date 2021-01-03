@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Crabot.MessageExtensions
 {
@@ -31,6 +32,16 @@ namespace Crabot.MessageExtensions
         }
 
         public EbmedMessageBuilder AddMessageFields(params EmbedField[] fields)
+        {
+            if (fields != null)
+            {
+                _embedMessage.Fields = fields;
+            }
+
+            return this;
+        }
+
+        public EbmedMessageBuilder AddMessageFields(IEnumerable<EmbedField> fields)
         {
             if (fields != null)
             {

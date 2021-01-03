@@ -34,6 +34,10 @@ namespace Crabot.Commands.Dispatcher
 					await _serviceProvider.GetService<ICommandHandler<ChampCommand>>()
 						.HandleAsync(new ChampCommand(message));
 					break;
+				case "monster":
+					await _serviceProvider.GetService<ICommandHandler<MonsterCommand>>()
+						.HandleAsync(new MonsterCommand(message));
+					break;
 				default:
 					await _serviceProvider.GetService<ICommandHandler<CommandError>>()
 						.HandleAsync(new CommandError(message));
