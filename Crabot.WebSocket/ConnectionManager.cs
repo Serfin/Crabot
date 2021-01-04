@@ -142,8 +142,6 @@ namespace Crabot.WebSocket
 
             while (!_heartbeatToken.IsCancellationRequested)
             {
-                HeartbeatAckReceived = false;
-
                 var heartbeatEvent = new GatewayPayload
                 {
                     Opcode = GatewayOpCode.Heartbeat,
