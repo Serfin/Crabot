@@ -41,8 +41,6 @@ namespace Crabot
         internal static IServiceCollection AddGatewayEventHandlers(this IServiceCollection services)
         {
             services.AddTransient<IGatewayEventHandler<ReadyEvent>, ReadyEventHandler>();
-            services.AddTransient<IGatewayEventHandler<HeartbeatEvent>, HelloEventHandler>();
-            services.AddTransient<IGatewayEventHandler<ReconnectEvent>, ReconnectEventHandler>();
             services.AddTransient<IGatewayEventHandler<Guild>, GuildCreateEventHandler>();
 
             return services;

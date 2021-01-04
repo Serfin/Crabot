@@ -27,6 +27,8 @@ namespace Crabot.WebSocket
 
         public event Func<GatewayPayload, Task> EventReceive;
 
+        private bool HeartbeatAckReceived = true;
+
         public ConnectionManager(
             ILogger<ConnectionManager> logger,
             IDiscordSocketClient discordSocketClient,
@@ -66,13 +68,12 @@ namespace Crabot.WebSocket
                     new Message { Content = "```\nServer requested [Reconnect]\n```" });
 
                 CloseHeartbeating();
-
-                var gatewayUrl = await _discordRestClient.GetGatewayUrlAsync();
-                await CreateConnectionAsync(new Uri(gatewayUrl));
+                await CreateConnectionAsync();
             }
             else if (payload.Opcode == GatewayOpCode.HeartbeatAck)
             {
-                _logger.LogWarning("Session prolongate successful!");
+                HeartbeatAckReceived = true;
+                _logger.LogWarning("HeartbeatAck received!");
             }
             else if (payload.Opcode == GatewayOpCode.Dispatch && payload.EventName == "RESUMED")
             {
@@ -95,9 +96,7 @@ namespace Crabot.WebSocket
                 {
                     await _discordRestClient.PostMessage("764840399696822322", 
                         new Message { Content = "```\nSession can be resumed\n```" });
-
-                    var gatewayUrl = await _discordRestClient.GetGatewayUrlAsync();
-                    await CreateConnectionAsync(new Uri(gatewayUrl));
+                    await CreateConnectionAsync();
                 }
                 else
                 {
@@ -106,9 +105,7 @@ namespace Crabot.WebSocket
                     await _discordRestClient.PostMessage("764840399696822322", 
                         new Message { Content = "```\nSession cannot be resumed\n```" });
                     await Task.Delay(new Random().Next(1, 6) * 1000);
-
-                    var gatewayUrl = await _discordRestClient.GetGatewayUrlAsync();
-                    await CreateConnectionAsync(new Uri(gatewayUrl));
+                    await CreateConnectionAsync();
                 }
             }
             else
@@ -145,6 +142,8 @@ namespace Crabot.WebSocket
 
             while (!_heartbeatToken.IsCancellationRequested)
             {
+                HeartbeatAckReceived = false;
+
                 var heartbeatEvent = new GatewayPayload
                 {
                     Opcode = GatewayOpCode.Heartbeat,
@@ -154,8 +153,19 @@ namespace Crabot.WebSocket
                 var heartbeatEventBytes = Encoding.UTF8.GetBytes(
                     JsonConvert.SerializeObject(heartbeatEvent));
                 await _discordSocketClient.SendAsync(heartbeatEventBytes, true);
-
                 await Task.Delay(heartbeatInterval, _heartbeatToken);
+
+                if (!HeartbeatAckReceived)
+                {
+                    _logger.LogWarning("Did not receive HeartbeatAck");
+                    await _discordRestClient.PostMessage("764840399696822322",
+                        new Message { Content = "```\nDid not receive HeartbeatAck\n```" });
+
+                    CloseHeartbeating();
+                    await CreateConnectionAsync();
+
+                    return;
+                }
             }
 
             _logger.LogWarning("Client stopped heartbeating");
@@ -200,14 +210,16 @@ namespace Crabot.WebSocket
             await _discordSocketClient.SendAsync(bytes, true);
         }
 
-        public async Task CreateConnectionAsync(Uri gatewayUri)
+        public async Task CreateConnectionAsync()
         {
             var clientInfo = _clientInfoRepository.GetClientInfo();
+            var gatewayUrl = await _discordRestClient.GetGatewayUrlAsync();
+
             if (clientInfo?.SessionId != null)
             {
                 // Resume session
                 await _discordSocketClient.DisconnectAsync();
-                await _discordSocketClient.ConnectAsync(gatewayUri);
+                await _discordSocketClient.ConnectAsync(new Uri(gatewayUrl));
                 await ResumeSession(clientInfo.SessionId);
             }
             else
@@ -215,7 +227,7 @@ namespace Crabot.WebSocket
                 // Create new session
                 // Disconnect client for safety (could be in connected state after InvalidSession event)
                 await _discordSocketClient.DisconnectAsync();
-                await _discordSocketClient.ConnectAsync(gatewayUri);
+                await _discordSocketClient.ConnectAsync(new Uri(gatewayUrl));
                 await IdentifyClient();
             }
         }

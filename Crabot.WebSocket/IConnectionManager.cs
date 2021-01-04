@@ -7,7 +7,7 @@ namespace Crabot.WebSocket
     public interface IConnectionManager
     {
         public void SetSequenceNumber(int? sequenceNumber);
-        public Task CreateConnectionAsync(Uri gatewayUri);
+        public Task CreateConnectionAsync();
         public Task RunHeartbeat(int heartbeatInterval);
 
         public event Func<GatewayPayload, Task> EventReceive;
