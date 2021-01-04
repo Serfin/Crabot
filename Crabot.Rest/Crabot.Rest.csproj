@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Crabot.Contracts\Crabot.Contracts.csproj" />
     <ProjectReference Include="..\Crabot.MessageExtensions\Crabot.MessageExtensions.csproj" />
   </ItemGroup>
 

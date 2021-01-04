@@ -17,7 +17,7 @@ namespace Crabot.Rest.RestClient
             ILogger<DiscordRestClient> logger)
         {
             _httpClient = httpClient;
-            _logger = logger;
+            _logger = logger; 
         }
 
         public async Task<string> GetGatewayUrlAsync()
@@ -48,7 +48,7 @@ namespace Crabot.Rest.RestClient
             }
         }
         
-        public async Task PostMessage(string channelId, Message message)
+        public async Task<OperationResult<Contracts.Message>> PostMessage(string channelId, Message message)
         {
             try
             {
@@ -61,6 +61,46 @@ namespace Crabot.Rest.RestClient
                 {
                     _logger.LogCritical("[RES] {0} {1} {2}", (int)response.StatusCode, response.ReasonPhrase, 
                         await response.Content.ReadAsStringAsync());
+
+                    return new OperationResult<Contracts.Message>(null, response.StatusCode,
+                        response.ReasonPhrase, await response.Content.ReadAsStringAsync());
+                }
+                else
+                {
+                    return new OperationResult<Contracts.Message>(JsonConvert.DeserializeObject<Contracts.Message>(
+                        await response.Content.ReadAsStringAsync()), response.StatusCode, 
+                        response.ReasonPhrase, string.Empty);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical("[ERR] Error during sending request ", ex.Message);
+                throw;
+            }
+        }
+
+        public async Task<OperationResult<Contracts.Message>> EditMessage(string channelId, string messageId, Message message)
+        {
+            try
+            {
+                _logger.LogWarning(JsonConvert.SerializeObject(message));
+
+                var response = await _httpClient.PatchAsync($"channels/{channelId}/messages/{messageId}",
+                    new StringContent(JsonConvert.SerializeObject(message), Encoding.UTF8, "application/json"));
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogCritical("[RES] {0} {1} {2}", (int)response.StatusCode, response.ReasonPhrase,
+                        await response.Content.ReadAsStringAsync());
+
+                    return new OperationResult<Contracts.Message>(null, response.StatusCode,
+                        response.ReasonPhrase, await response.Content.ReadAsStringAsync());
+                }
+                else
+                {
+                    return new OperationResult<Contracts.Message>(JsonConvert.DeserializeObject<Contracts.Message>(
+                        await response.Content.ReadAsStringAsync()), response.StatusCode,
+                        response.ReasonPhrase, string.Empty);
                 }
             }
             catch (Exception ex)
