@@ -14,8 +14,6 @@ namespace Crabot.WebSocket
 {
     public class ConnectionManager : IConnectionManager
     {
-        public int? SequenceNumber { get; private set; }
-
         private readonly ILogger _logger;
         private readonly IDiscordSocketClient _discordSocketClient;
         private readonly IDiscordRestClient _discordRestClient;
@@ -23,12 +21,13 @@ namespace Crabot.WebSocket
 
         private CancellationTokenSource _heartbeatTokenSource;
         private CancellationToken _heartbeatToken;
-        public Task _heartbeatTask;
+        private Task _heartbeatTask;
 
         public event Func<GatewayPayload, Task> EventReceive;
 
         private object _heartbeatAckLocker = new object();
-        private bool HeartbeatAck = true;
+        private bool _heartbeatAck = true;
+        private int? _sequenceNumber;
 
         public ConnectionManager(
             ILogger<ConnectionManager> logger,
@@ -50,72 +49,94 @@ namespace Crabot.WebSocket
 
             SetSequenceNumber(payload.SequenceNumber);
 
-            if (payload.Opcode == GatewayOpCode.Hello)
+            switch (payload.Opcode)
             {
-                _logger.LogInformation("[{0}]", payload.Opcode);
-                await _discordRestClient.PostMessage("764840399696822322", 
-                    new Message { Content = "```\nServer sent [Hello]\n```" });
-                SetCancellationToken();
+                case GatewayOpCode.Hello:
+                    {
+                        _logger.LogInformation("[{0}]", payload.Opcode);
+                        await _discordRestClient.PostMessage("764840399696822322",
+                            new Message { Content = "```\nServer sent [Hello]\n```" });
+                        SetCancellationToken();
 
-                var heartbeatInterval = JsonConvert.DeserializeObject<HeartbeatEvent>(
-                   payload.EventData.ToString()).HeartbeatInterval;
+                        var heartbeatInterval = JsonConvert.DeserializeObject<HeartbeatEvent>(
+                           payload.EventData.ToString()).HeartbeatInterval;
 
-                _heartbeatTask = RunHeartbeat(heartbeatInterval);
-            }
-            else if (payload.Opcode == GatewayOpCode.Reconnect)
-            {
-                _logger.LogInformation("[{0}]", payload.Opcode);
-                await _discordRestClient.PostMessage("764840399696822322", 
-                    new Message { Content = "```\nServer requested [Reconnect]\n```" });
+                        _heartbeatTask = RunHeartbeat(heartbeatInterval);
+                    }
+                    break;
+                case GatewayOpCode.Reconnect:
+                    {
+                        _logger.LogInformation("[{0}]", payload.Opcode);
+                        await _discordRestClient.PostMessage("764840399696822322",
+                            new Message { Content = "```\nServer requested [Reconnect]\n```" });
 
-                CloseHeartbeating();
-                await CreateConnectionAsync();
-            }
-            else if (payload.Opcode == GatewayOpCode.HeartbeatAck)
-            {
-                lock (_heartbeatAckLocker)
-                {
-                    HeartbeatAck = true;
-                }
+                        CloseHeartbeating();
+                        await CreateConnectionAsync();
+                    }
+                    break;
+                case GatewayOpCode.Heartbeat:
+                    {
+                        _logger.LogWarning("Client requested manual heartbeat!");
+                        await _discordRestClient.PostMessage("764840399696822322",
+                            new Message { Content = "```\nServer requested manual heartbeat!\n```" });
 
-                _logger.LogWarning("HeartbeatAck received!");
-            }
-            else if (payload.Opcode == GatewayOpCode.Dispatch && payload.EventName == "RESUMED")
-            {
-                await _discordRestClient.PostMessage("764840399696822322", 
-                    new Message { Content = "```\nServer sent [Dispatch - RESUMED]\n```" });
-                _logger.LogWarning("Session resumed!");
-            }
-            else if (payload.Opcode == GatewayOpCode.InvalidSession)
-            {
-                _logger.LogWarning("Cannot resume session!");
-                await _discordRestClient.PostMessage("764840399696822322", 
-                    new Message { Content = "```\nServer sent [InvalidSession]\n```" });
+                        var heartbeatEvent = new GatewayPayload
+                        {
+                            Opcode = GatewayOpCode.Heartbeat,
+                            EventData = _sequenceNumber ?? null,
+                        };
 
-                _logger.LogInformation("[{0}]", payload.Opcode);
-                CloseHeartbeating();
+                        var heartbeatEventBytes = Encoding.UTF8.GetBytes(
+                            JsonConvert.SerializeObject(heartbeatEvent));
+                        await _discordSocketClient.SendAsync(heartbeatEventBytes, true);
+                    }
+                    break;
+                case GatewayOpCode.HeartbeatAck:
+                    {
+                        lock (_heartbeatAckLocker)
+                        {
+                            _heartbeatAck = true;
+                        }
 
-                var conversionSuccess = bool.TryParse(payload.EventData.ToString(), out bool canBeResumed);
+                        _logger.LogWarning("HeartbeatAck received!");
+                    }
+                    break;
+                case GatewayOpCode.InvalidSession:
+                    {
+                        _logger.LogWarning("Cannot resume session!");
+                        await _discordRestClient.PostMessage("764840399696822322",
+                            new Message { Content = "```\nServer sent [InvalidSession]\n```" });
 
-                if (conversionSuccess && canBeResumed)
-                {
-                    await _discordRestClient.PostMessage("764840399696822322", 
-                        new Message { Content = "```\nSession can be resumed\n```" });
-                    await CreateConnectionAsync();
-                }
-                else
-                {
-                    // Delete old session id
-                    _clientInfoRepository.DeleteClientInfo();
-                    await _discordRestClient.PostMessage("764840399696822322", 
-                        new Message { Content = "```\nSession cannot be resumed\n```" });
-                    await Task.Delay(new Random().Next(1, 6) * 1000);
-                    await CreateConnectionAsync();
-                }
-            }
-            else
-            {
-                await EventReceive.Invoke(payload);
+                        _logger.LogInformation("[{0}]", payload.Opcode);
+                        CloseHeartbeating();
+
+                        var conversionSuccess = bool.TryParse(payload.EventData.ToString(), out bool canBeResumed);
+
+                        if (conversionSuccess && canBeResumed)
+                        {
+                            await _discordRestClient.PostMessage("764840399696822322",
+                                new Message { Content = "```\nSession can be resumed\n```" });
+                            await CreateConnectionAsync();
+                        }
+                        else
+                        {
+                            // Delete old session id
+                            _clientInfoRepository.DeleteClientInfo();
+                            await _discordRestClient.PostMessage("764840399696822322",
+                                new Message { Content = "```\nSession cannot be resumed\n```" });
+                            await Task.Delay(new Random().Next(1, 6) * 1000);
+                            await CreateConnectionAsync();
+                        }
+                    }
+                    break;
+                case GatewayOpCode.Dispatch:
+                    {
+                        await EventReceive.Invoke(payload);
+                    }
+                    break;
+                default:
+                    _logger.LogWarning("Received unhandled event!");
+                    break;
             }
         }
 
@@ -123,7 +144,7 @@ namespace Crabot.WebSocket
         {
             if (sequenceNumber.HasValue)
             {
-                SequenceNumber = sequenceNumber.Value;
+                _sequenceNumber = sequenceNumber.Value;
             }
         }
 
@@ -150,7 +171,7 @@ namespace Crabot.WebSocket
                 var heartbeatEvent = new GatewayPayload
                 {
                     Opcode = GatewayOpCode.Heartbeat,
-                    EventData = SequenceNumber ?? null,
+                    EventData = _sequenceNumber ?? null,
                 };
 
                 var heartbeatEventBytes = Encoding.UTF8.GetBytes(
@@ -158,7 +179,7 @@ namespace Crabot.WebSocket
                 await _discordSocketClient.SendAsync(heartbeatEventBytes, true);
                 await Task.Delay(heartbeatInterval, _heartbeatToken);
 
-                if (!HeartbeatAck)
+                if (!_heartbeatAck)
                 {
                     _logger.LogWarning("Did not receive HeartbeatAck");
                     await _discordRestClient.PostMessage("764840399696822322",
@@ -172,7 +193,7 @@ namespace Crabot.WebSocket
 
                 lock (_heartbeatAckLocker)
                 {
-                    HeartbeatAck = false;
+                    _heartbeatAck = false;
                 }
             }
 
@@ -210,7 +231,7 @@ namespace Crabot.WebSocket
                 {
                     Token = Environment.GetEnvironmentVariable("BOT_TOKEN"),
                     SessionId = sessionId,
-                    Sequence = SequenceNumber.Value
+                    Sequence = _sequenceNumber.Value
                 }
             };
 
