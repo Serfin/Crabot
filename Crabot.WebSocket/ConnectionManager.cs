@@ -28,7 +28,7 @@ namespace Crabot.WebSocket
         public event Func<GatewayPayload, Task> EventReceive;
 
         private object _heartbeatAckLocker = new object();
-        private bool HeartbeatAckReceived = true;
+        private bool HeartbeatAck = true;
 
         public ConnectionManager(
             ILogger<ConnectionManager> logger,
@@ -75,7 +75,7 @@ namespace Crabot.WebSocket
             {
                 lock (_heartbeatAckLocker)
                 {
-                    HeartbeatAckReceived = true;
+                    HeartbeatAck = true;
                 }
 
                 _logger.LogWarning("HeartbeatAck received!");
@@ -158,7 +158,7 @@ namespace Crabot.WebSocket
                 await _discordSocketClient.SendAsync(heartbeatEventBytes, true);
                 await Task.Delay(heartbeatInterval, _heartbeatToken);
 
-                if (!HeartbeatAckReceived)
+                if (!HeartbeatAck)
                 {
                     _logger.LogWarning("Did not receive HeartbeatAck");
                     await _discordRestClient.PostMessage("764840399696822322",
@@ -172,7 +172,7 @@ namespace Crabot.WebSocket
 
                 lock (_heartbeatAckLocker)
                 {
-                    HeartbeatAckReceived = false;
+                    HeartbeatAck = false;
                 }
             }
 
@@ -234,6 +234,7 @@ namespace Crabot.WebSocket
             {
                 // Create new session
                 // Disconnect client for safety (could be in connected state after InvalidSession event)
+                SetSequenceNumber(0);
                 await _discordSocketClient.DisconnectAsync();
                 await _discordSocketClient.ConnectAsync(new Uri(gatewayUrl));
                 await IdentifyClient();

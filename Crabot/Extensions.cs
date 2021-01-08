@@ -50,7 +50,6 @@ namespace Crabot
         {
             services.AddTransient<ICommandHandler<PingCommand>, PingCommandHandler>();
             services.AddTransient<ICommandHandler<CommandError>, CommandErrorHandler>();
-            services.AddTransient<ICommandHandler<ChampCommand>, ChampCommandHandler>();
             services.AddTransient<ICommandHandler<HelpCommand>, HelpCommandHandler>();
             services.AddTransient<ICommandHandler<MonsterCommand>, MonsterCommandHandler>();
 
