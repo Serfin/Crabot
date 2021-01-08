@@ -27,6 +27,7 @@ namespace Crabot.WebSocket
 
         public event Func<GatewayPayload, Task> EventReceive;
 
+        private object _heartbeatAckLocker = new object();
         private bool HeartbeatAckReceived = true;
 
         public ConnectionManager(
@@ -72,7 +73,11 @@ namespace Crabot.WebSocket
             }
             else if (payload.Opcode == GatewayOpCode.HeartbeatAck)
             {
-                HeartbeatAckReceived = true;
+                lock (_heartbeatAckLocker)
+                {
+                    HeartbeatAckReceived = true;
+                }
+
                 _logger.LogWarning("HeartbeatAck received!");
             }
             else if (payload.Opcode == GatewayOpCode.Dispatch && payload.EventName == "RESUMED")
@@ -163,6 +168,11 @@ namespace Crabot.WebSocket
                     await CreateConnectionAsync();
 
                     return;
+                }
+
+                lock (_heartbeatAckLocker)
+                {
+                    HeartbeatAckReceived = false;
                 }
             }
 

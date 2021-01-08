@@ -101,7 +101,7 @@ namespace Crabot.WebSocket
         }
 
         /// <summary>
-        /// Start listening for socket data
+        /// Start listening on socket for data
         /// </summary>
         /// <param name="cancelToken">Cancellation token</param>
         /// <returns>Listen on socket Task</returns>
@@ -183,6 +183,12 @@ namespace Crabot.WebSocket
             }
         }
 
+        /// <summary>
+        /// Send bytes through the socket
+        /// </summary>
+        /// <param name="payload">Byte payload</param>
+        /// <param name="isEoF">Is Eof</param>
+        /// <returns>Send Task</returns>
         public async Task SendAsync(byte[] payload, bool isEoF)
         {
             await _socketLock.WaitAsync();

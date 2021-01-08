@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Crabot.Commands.Dispatcher;
 using Crabot.Commands.Models;
