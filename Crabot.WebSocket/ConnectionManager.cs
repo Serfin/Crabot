@@ -50,7 +50,9 @@ namespace Crabot.WebSocket
         {
             var payload = JsonConvert.DeserializeObject<GatewayPayload>(message);
 
-            _logger.LogInformation("[{0}]", payload.Opcode.ToString().ToUpperInvariant());
+            _logger.LogInformation("[{0} - {1}]", payload.Opcode.ToString().ToUpperInvariant(), 
+                payload.EventName ?? string.Empty);
+
             SetSequenceNumber(payload.SequenceNumber);
             _lastMessageTime = Environment.TickCount;
 

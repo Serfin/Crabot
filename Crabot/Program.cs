@@ -10,8 +10,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
+using Serilog;
+using Serilog.Events;
 
 namespace Crabot
 {
@@ -36,8 +37,7 @@ namespace Crabot
                 .AddLogging(builder =>
                 {
                     builder.ClearProviders();
-                    builder.AddConfiguration(_configuration.GetSection("Logging"));
-                    builder.AddConsole();
+                    builder.AddSerilog(LoadLoggerConfiguration());
                 })
                 .AddSingleton<CrabotClient>()
                 .AddSingleton<DiscordGatewayClient>()
@@ -54,6 +54,17 @@ namespace Crabot
                 .AddDicordRestClient(_configuration)
                 .AddDiscordSocketClient()
                 .BuildServiceProvider();
+
+        private static Serilog.ILogger LoadLoggerConfiguration()
+        {
+            return new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                .Enrich.FromLogContext()
+                .WriteTo.Console()
+                .WriteTo.File("logs\\Crabot.txt", rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+        }
 
         private static IConfiguration LoadConfiguration()
         {
