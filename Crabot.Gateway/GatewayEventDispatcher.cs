@@ -15,18 +15,15 @@ namespace Crabot.Gateway
         private readonly ILogger _logger;
         private readonly ICommandProcessor _commandProcessor;
         private readonly IServiceProvider _serviceProvider;
-        private readonly IDiscordRestClient _discordRestClient;
 
         public GatewayEventDispatcher(
             ILogger<GatewayEventDispatcher> logger, 
             ICommandProcessor commandProcessor, 
-            IServiceProvider serviceProvider, 
-            IDiscordRestClient discordRestClient)
+            IServiceProvider serviceProvider)
         {
             _logger = logger;
             _commandProcessor = commandProcessor;
             _serviceProvider = serviceProvider;
-            _discordRestClient = discordRestClient;
         }
 
         public async Task DispatchEvent(GatewayPayload @event)
@@ -52,8 +49,6 @@ namespace Crabot.Gateway
                     break;
                 case "RESUMED":
                     {
-                        await _discordRestClient.PostMessage("764840399696822322",
-                            new Rest.Models.Message { Content = "```\nServer sent [Dispatch - RESUMED]\n```" });
                         _logger.LogWarning("Session resumed!");
                     }
                     break;
