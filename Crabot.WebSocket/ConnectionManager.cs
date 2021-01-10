@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -18,6 +19,7 @@ namespace Crabot.WebSocket
         private readonly IDiscordSocketClient _discordSocketClient;
         private readonly IDiscordRestClient _discordRestClient;
         private readonly IClientInfoRepository _clientInfoRepository;
+        private readonly ConcurrentQueue<long> _heartbeatTimes;
 
         private CancellationTokenSource _heartbeatTokenSource;
         private CancellationToken _heartbeatToken;
@@ -25,9 +27,9 @@ namespace Crabot.WebSocket
 
         public event Func<GatewayPayload, Task> EventReceive;
 
-        private object _heartbeatAckLocker = new object();
-        private bool _heartbeatAck = true;
         private int? _sequenceNumber;
+        private long _lastMessageTime;
+        private int _latency;
 
         public ConnectionManager(
             ILogger<ConnectionManager> logger,
@@ -41,19 +43,21 @@ namespace Crabot.WebSocket
             _discordRestClient = discordRestClient;
             _clientInfoRepository = clientInfoRepository;
             _heartbeatToken = CancellationToken.None;
+            _heartbeatTimes = new ConcurrentQueue<long>();
         }
 
         private async Task OnMessageReceive(string message)
         {
             var payload = JsonConvert.DeserializeObject<GatewayPayload>(message);
 
+            _logger.LogInformation("[{0}]", payload.Opcode.ToString().ToUpperInvariant());
             SetSequenceNumber(payload.SequenceNumber);
+            _lastMessageTime = Environment.TickCount;
 
             switch (payload.Opcode)
             {
                 case GatewayOpCode.Hello:
                     {
-                        _logger.LogInformation("[{0}]", payload.Opcode);
                         await _discordRestClient.PostMessage("764840399696822322",
                             new Message { Content = "```\nServer sent [Hello]\n```" });
                         SetCancellationToken();
@@ -66,7 +70,6 @@ namespace Crabot.WebSocket
                     break;
                 case GatewayOpCode.Reconnect:
                     {
-                        _logger.LogInformation("[{0}]", payload.Opcode);
                         await _discordRestClient.PostMessage("764840399696822322",
                             new Message { Content = "```\nServer requested [Reconnect]\n```" });
 
@@ -93,12 +96,14 @@ namespace Crabot.WebSocket
                     break;
                 case GatewayOpCode.HeartbeatAck:
                     {
-                        lock (_heartbeatAckLocker)
+                        if (_heartbeatTimes.TryDequeue(out long time))
                         {
-                            _heartbeatAck = true;
-                        }
+                            int latency = (int)(Environment.TickCount - time);
+                            int before = _latency;
+                            _latency = latency;
 
-                        _logger.LogWarning("HeartbeatAck received!");
+                            _logger.LogWarning("Latency: old - {0}ms | new - {1}ms", before, _latency);
+                        }
                     }
                     break;
                 case GatewayOpCode.InvalidSession:
@@ -107,12 +112,9 @@ namespace Crabot.WebSocket
                         await _discordRestClient.PostMessage("764840399696822322",
                             new Message { Content = "```\nServer sent [InvalidSession]\n```" });
 
-                        _logger.LogInformation("[{0}]", payload.Opcode);
                         CloseHeartbeating();
 
-                        var conversionSuccess = bool.TryParse(payload.EventData.ToString(), out bool canBeResumed);
-
-                        if (conversionSuccess && canBeResumed)
+                        if (bool.TryParse(payload.EventData.ToString(), out bool canBeResumed) && canBeResumed)
                         {
                             await _discordRestClient.PostMessage("764840399696822322",
                                 new Message { Content = "```\nSession can be resumed\n```" });
@@ -168,6 +170,18 @@ namespace Crabot.WebSocket
 
             while (!_heartbeatToken.IsCancellationRequested)
             {
+                int now = Environment.TickCount;
+                if (_heartbeatTimes.Count != 0 && (now - _lastMessageTime) > heartbeatInterval)
+                {
+                    _logger.LogCritical("Did not receive HeartbeatAck");
+                    CloseHeartbeating();
+                    await CreateConnectionAsync();
+
+                    break;
+                }
+
+                _heartbeatTimes.Enqueue(now);
+
                 var heartbeatEvent = new GatewayPayload
                 {
                     Opcode = GatewayOpCode.Heartbeat,
@@ -178,23 +192,6 @@ namespace Crabot.WebSocket
                     JsonConvert.SerializeObject(heartbeatEvent));
                 await _discordSocketClient.SendAsync(heartbeatEventBytes, true);
                 await Task.Delay(heartbeatInterval, _heartbeatToken);
-
-                if (!_heartbeatAck)
-                {
-                    _logger.LogWarning("Did not receive HeartbeatAck");
-                    await _discordRestClient.PostMessage("764840399696822322",
-                        new Message { Content = "```\nDid not receive HeartbeatAck\n```" });
-
-                    CloseHeartbeating();
-                    await CreateConnectionAsync();
-
-                    return;
-                }
-
-                lock (_heartbeatAckLocker)
-                {
-                    _heartbeatAck = false;
-                }
             }
 
             _logger.LogWarning("Client stopped heartbeating");
