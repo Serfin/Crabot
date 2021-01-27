@@ -14,6 +14,7 @@ using ScrapySharp.Network;
 
 namespace Crabot.Commands.Commands.Handlers
 {
+    [Command("monster")]
     public class MonsterCommandHandler : ICommandHandler<MonsterCommand>
     {
         private readonly IDiscordRestClient _discordRestClient;

@@ -47,12 +47,12 @@ namespace Crabot
                 .AddTransient<IGatewayEventDispatcher, GatewayEventDispatcher>()
                 .AddTransient<ICommandDispatcher, CommandDispatcher>()
                 .AddGatewayEventHandlers()
-                .AddCommands()
                 .AddSingleton<IConnectionManager, ConnectionManager>()
                 .AddTransient<IGuildRepository, GuildRepository>()
                 .AddTransient<IClientInfoRepository, ClientInfoRepository>()
                 .AddDicordRestClient(_configuration)
                 .AddDiscordSocketClient()
+                .RegisterDeclaredCommands()
                 .BuildServiceProvider();
 
         private static Serilog.ILogger LoadLoggerConfiguration()

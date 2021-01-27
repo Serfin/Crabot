@@ -69,7 +69,7 @@ namespace Crabot.WebSocket
         /// Disconnect from socket and stop listening task
         /// </summary>
         /// <returns>Disconnect Task</returns>
-        public async Task DisconnectAsync()
+        public async Task DisconnectAsync(WebSocketCloseStatus socketCloseStatus)
         {
             await _socketLock.WaitAsync();
 
@@ -81,7 +81,7 @@ namespace Crabot.WebSocket
                     _cancelTokenSource.Cancel(false);
                     _disconnectTokenSource.Cancel(false);
 
-                    await _client.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                    await _client.CloseOutputAsync(socketCloseStatus, "", CancellationToken.None);
 
                     _client.Dispose();
                     _client = null;

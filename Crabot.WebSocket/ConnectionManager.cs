@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +28,7 @@ namespace Crabot.WebSocket
 
         public event Func<GatewayPayload, Task> EventReceive;
 
-        private int? _sequenceNumber;
+        private int? _sequenceNumber = default(int);
         private long _lastMessageTime;
         private int _latency;
 
@@ -71,7 +72,7 @@ namespace Crabot.WebSocket
                 case GatewayOpCode.Reconnect:
                     {
                         CloseHeartbeating();
-                        await CreateConnectionAsync();
+                        await CreateConnectionAsync(WebSocketCloseStatus.NormalClosure);
                     }
                     break;
                 case GatewayOpCode.Heartbeat:
@@ -107,14 +108,15 @@ namespace Crabot.WebSocket
                         CloseHeartbeating();
                         if (bool.TryParse(payload.EventData.ToString(), out bool canBeResumed) && canBeResumed)
                         {
-                            await CreateConnectionAsync();
+                            await CreateConnectionAsync(WebSocketCloseStatus.NormalClosure);
                         }
                         else
                         {
                             // Delete old session id
                             _clientInfoRepository.DeleteClientInfo();
+                            SetSequenceNumber(0);
                             await Task.Delay(new Random().Next(1, 6) * 1000);
-                            await CreateConnectionAsync();
+                            await CreateConnectionAsync(WebSocketCloseStatus.EndpointUnavailable);
                         }
                     }
                     break;
@@ -124,7 +126,8 @@ namespace Crabot.WebSocket
                     }
                     break;
                 default:
-                    _logger.LogWarning("Received unhandled event!");
+                    _logger.LogWarning("Received unhandled event! - {0} {1} {2}", payload.Opcode.ToString().ToUpperInvariant(),
+                        payload.EventName ?? string.Empty, payload.EventData ?? string.Empty);
                     break;
             }
         }
@@ -160,7 +163,7 @@ namespace Crabot.WebSocket
                 {
                     _logger.LogCritical("Did not receive HeartbeatAck");
                     CloseHeartbeating();
-                    await CreateConnectionAsync();
+                    await CreateConnectionAsync(WebSocketCloseStatus.EndpointUnavailable);
 
                     break;
                 }
@@ -221,7 +224,7 @@ namespace Crabot.WebSocket
             await _discordSocketClient.SendAsync(bytes, true);
         }
 
-        public async Task CreateConnectionAsync()
+        public async Task CreateConnectionAsync(WebSocketCloseStatus socketCloseStatus)
         {
             var clientInfo = _clientInfoRepository.GetClientInfo();
             var gatewayUrl = await _discordRestClient.GetGatewayUrlAsync();
@@ -229,7 +232,7 @@ namespace Crabot.WebSocket
             if (clientInfo?.SessionId != null)
             {
                 // Resume session
-                await _discordSocketClient.DisconnectAsync();
+                await _discordSocketClient.DisconnectAsync(socketCloseStatus);
                 await _discordSocketClient.ConnectAsync(new Uri(gatewayUrl));
                 await ResumeSession(clientInfo.SessionId);
             }
@@ -237,8 +240,7 @@ namespace Crabot.WebSocket
             {
                 // Create new session
                 // Disconnect client for safety (could be in connected state after InvalidSession event)
-                SetSequenceNumber(0);
-                await _discordSocketClient.DisconnectAsync();
+                await _discordSocketClient.DisconnectAsync(socketCloseStatus);
                 await _discordSocketClient.ConnectAsync(new Uri(gatewayUrl));
                 await IdentifyClient();
             }

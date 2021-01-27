@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Crabot.Commands.Commands;
 using Crabot.Commands.Dispatcher;
 using Crabot.Commands.Models;
 using Crabot.Rest.Models;
@@ -7,6 +8,7 @@ using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Handlers
 {
+    [Command("ping")]
     public class PingCommandHandler : ICommandHandler<PingCommand>
     {
         private readonly IDiscordRestClient _discordRestClient;

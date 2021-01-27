@@ -7,6 +7,7 @@ using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Commands.Handlers
 {
+    [Command("help")]
     public class HelpCommandHandler : ICommandHandler<HelpCommand>
     {
         private readonly IDiscordRestClient _discordRestClient;

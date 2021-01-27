@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Net.WebSockets;
+using System.Threading.Tasks;
 using Crabot.WebSocket;
 
 namespace Crabot.Gateway
@@ -19,7 +20,7 @@ namespace Crabot.Gateway
         public async Task StartAsync()
         {
             _connectionManager.EventReceive += _gatewayDiscordDispatcher.DispatchEvent;
-            await _connectionManager.CreateConnectionAsync();
+            await _connectionManager.CreateConnectionAsync(WebSocketCloseStatus.NormalClosure);
         }
     }
 }

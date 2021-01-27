@@ -13,7 +13,7 @@ namespace Crabot.Commands
         private readonly ICommandValidator _commandValidator;
 
         public CommandProcessor(
-            ICommandDispatcher commandDispatcher, 
+            ICommandDispatcher commandDispatcher,
             ICommandValidator commandValidator)
         {
             _commandDispatcher = commandDispatcher;

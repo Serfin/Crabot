@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using Crabot.Commands.Commands;
 using Crabot.Commands.Dispatcher;
 using Crabot.Commands.Models;
 using Crabot.Core.Repositories;
@@ -8,6 +9,7 @@ using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Handlers
 {
+    [Command("")]
     public class CommandErrorHandler : ICommandHandler<CommandError>
     {
         private readonly IDiscordRestClient _discordRestClient;
