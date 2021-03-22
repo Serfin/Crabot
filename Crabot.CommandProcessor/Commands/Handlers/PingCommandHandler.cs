@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Crabot.Commands.Commands;
+using Crabot.Commands.Commands.Models;
 using Crabot.Commands.Dispatcher;
-using Crabot.Commands.Models;
 using Crabot.Rest.Models;
 using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Handlers
 {
-    public class PingCommandHandler : ICommandHandler<PingCommand>
+    [Command("ping")]
+    public class PingCommandHandler : ICommandHandler
     {
         private readonly IDiscordRestClient _discordRestClient;
 
@@ -16,9 +18,9 @@ namespace Crabot.Commands.Handlers
             _discordRestClient = discordRestClient;
         }
 
-        public async Task HandleAsync(PingCommand command)
+        public async Task HandleAsync(Command command)
         {
-            var response = await _discordRestClient.PostMessage(command.Message.ChannelId, 
+            var response = await _discordRestClient.PostMessage(command.CalledFromChannel, 
                 new Message { Content = "Calculating..." });
 
             var latency = DateTime.Now.Subtract(response.Data.Timestamp);

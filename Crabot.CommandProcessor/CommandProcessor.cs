@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Crabot.Commands.Commands;
+using Crabot.Commands.Commands.Models;
 using Crabot.Commands.Dispatcher;
 using Crabot.Contracts;
 using Crabot.Core.Events;
@@ -24,9 +25,11 @@ namespace Crabot.Commands
         {
             var message = JsonConvert.DeserializeObject<Message>(payload.EventData.ToString());
 
-            if (_commandValidator.ValidateCommand(message))
+            if (_commandValidator.IsCommand(message))
             {
-                await _commandDispatcher.DispatchAsync(message);
+                var command = new Command(message);
+
+                await _commandDispatcher.DispatchAsync(command);
             }
         }
     }

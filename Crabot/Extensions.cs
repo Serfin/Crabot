@@ -1,9 +1,10 @@
 ﻿using System;
-using Crabot.Commands.Commands.Handlers;
-using Crabot.Commands.Commands.Models;
+using System.Reflection;
+using Autofac;
+using Autofac.Core;
+using Crabot.Commands;
+using Crabot.Commands.Commands;
 using Crabot.Commands.Dispatcher;
-using Crabot.Commands.Handlers;
-using Crabot.Commands.Models;
 using Crabot.Contracts;
 using Crabot.Core.Events;
 using Crabot.Gateway;
@@ -44,6 +45,20 @@ namespace Crabot
             services.AddTransient<IGatewayEventHandler<Guild>, GuildCreateEventHandler>();
 
             return services;
+        }
+
+        public static ContainerBuilder RegisterCommandHandler(this ContainerBuilder containerBuilder)
+        {
+            var commandAssembly = typeof(CommandProcessor).Assembly;
+
+            // Register ICommandHandler as Handler with command name as Key for resolving
+            containerBuilder.RegisterAssemblyTypes(commandAssembly)
+                .Where(x => x.Name.EndsWith("CommandHandler"))
+                .Keyed(t => t.GetCustomAttribute<CommandAttribute>().CommandName, typeof(ICommandHandler))
+                .AsImplementedInterfaces()
+                .InstancePerLifetimeScope();
+
+            return containerBuilder;
         }
     }
 }

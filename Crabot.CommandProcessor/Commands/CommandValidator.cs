@@ -12,7 +12,7 @@ namespace Crabot.Commands.Commands
             _clientInfoRepository = clientInfoRepository;
         }
 
-        public bool ValidateCommand(Message message)
+        public bool IsCommand(Message message)
         {
             return message.Content.Length > 0
                 && message.Content.TrimStart()[0] == '?'

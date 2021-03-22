@@ -1,5 +1,7 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using Crabot.Commands;
 using Crabot.Commands.Commands;
 using Crabot.Commands.Dispatcher;
@@ -31,8 +33,9 @@ namespace Crabot
             }
         }
 
-        private static ServiceProvider ConfigureServices()
-            => new ServiceCollection()
+        private static AutofacServiceProvider ConfigureServices()
+        {
+            var services = new ServiceCollection()
                 .AddSingleton(LoadConfiguration())
                 .AddLogging(builder =>
                 {
@@ -51,9 +54,16 @@ namespace Crabot
                 .AddTransient<IGuildRepository, GuildRepository>()
                 .AddTransient<IClientInfoRepository, ClientInfoRepository>()
                 .AddDicordRestClient(_configuration)
-                .AddDiscordSocketClient()
-                .RegisterDeclaredCommands()
-                .BuildServiceProvider();
+                .AddDiscordSocketClient();
+
+            var containerBuilder = new ContainerBuilder();
+            containerBuilder.Populate(services);
+            containerBuilder.RegisterCommandHandler();
+          
+            var container = containerBuilder.Build();
+
+            return new AutofacServiceProvider(container);
+        }
 
         private static Serilog.ILogger LoadLoggerConfiguration()
         {

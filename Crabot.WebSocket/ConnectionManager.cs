@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crabot.Core.Events;
 using Crabot.Core.Repositories;
-using Crabot.Rest.Models;
 using Crabot.Rest.RestClient;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;

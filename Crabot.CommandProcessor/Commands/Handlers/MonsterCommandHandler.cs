@@ -14,7 +14,8 @@ using ScrapySharp.Network;
 
 namespace Crabot.Commands.Commands.Handlers
 {
-    public class MonsterCommandHandler : ICommandHandler<MonsterCommand>
+    [Command("monster")]
+    public class MonsterCommandHandler : ICommandHandler
     {
         private readonly IDiscordRestClient _discordRestClient;
 
@@ -23,7 +24,7 @@ namespace Crabot.Commands.Commands.Handlers
             _discordRestClient = discordRestClient;
         }
 
-        public async Task HandleAsync(MonsterCommand command)
+        public async Task HandleAsync(Command command)
         {
             try
             {
@@ -34,12 +35,12 @@ namespace Crabot.Commands.Commands.Handlers
                     .AddMessageFields(FormatFields(offerThreads))
                     .Build();
 
-                await _discordRestClient.PostMessage(command.Message.ChannelId,
+                await _discordRestClient.PostMessage(command.CalledFromChannel,
                     new Message { Embed = embedMessage });
             }
             catch (Exception ex)
             {
-                await _discordRestClient.PostMessage(command.Message.ChannelId,
+                await _discordRestClient.PostMessage(command.CalledFromChannel,
                     new Message { Content = string.Format("Wystąpił bład - {0}", ex.Message) });
             }
         }

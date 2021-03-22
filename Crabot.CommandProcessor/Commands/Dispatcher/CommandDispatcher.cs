@@ -1,43 +1,36 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Autofac;
 using Crabot.Commands.Commands.Models;
-using Crabot.Commands.Models;
-using Crabot.Contracts;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Crabot.Commands.Dispatcher
 {
 	public class CommandDispatcher : ICommandDispatcher
 	{
-		private readonly IServiceProvider _serviceProvider;
+		private readonly IComponentContext _component;
 
-		public CommandDispatcher(IServiceProvider serviceProvider)
+        public CommandDispatcher(IComponentContext component)
+        {
+            _component = component;
+        }
+
+        public async Task DispatchAsync(Command command)
 		{
-			_serviceProvider = serviceProvider;
-		}
+			var commandHandler = _component.ResolveKeyed<ICommandHandler>(command.CommandName);
 
-		public async Task DispatchAsync(Message message)
-		{
-			var commandName = message.Content.ToLower()[1..];
-
-			switch (commandName)
+			if (commandHandler is null)
             {
-				case "ping":
-					await _serviceProvider.GetService<ICommandHandler<PingCommand>>()
-						.HandleAsync(new PingCommand(message));
-					break;
-				case "help":
-					await _serviceProvider.GetService<ICommandHandler<HelpCommand>>()
-						.HandleAsync(new HelpCommand(message));
-					break;
-				case "monster":
-					await _serviceProvider.GetService<ICommandHandler<MonsterCommand>>()
-						.HandleAsync(new MonsterCommand(message));
-					break;
-				default:
-					await _serviceProvider.GetService<ICommandHandler<CommandError>>()
-						.HandleAsync(new CommandError(message));
-					break;
+				throw new ArgumentNullException("Specified command does not have assigned handler!");
+            }
+
+			try
+            {
+				await commandHandler.HandleAsync(command);
+            }
+			catch (Exception ex)
+            {
+				// TODO: use dedicated logger
+				Console.WriteLine(ex.Message);
             }
 		}
 	}

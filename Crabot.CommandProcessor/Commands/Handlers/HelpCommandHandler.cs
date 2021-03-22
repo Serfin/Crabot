@@ -7,7 +7,8 @@ using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Commands.Handlers
 {
-    public class HelpCommandHandler : ICommandHandler<HelpCommand>
+    [Command("help")]
+    public class HelpCommandHandler : ICommandHandler
     {
         private readonly IDiscordRestClient _discordRestClient;
 
@@ -16,7 +17,7 @@ namespace Crabot.Commands.Commands.Handlers
             _discordRestClient = discordRestClient;
         }
 
-        public async Task HandleAsync(HelpCommand command)
+        public async Task HandleAsync(Command command)
         {
             var embedMessage = new EbmedMessageBuilder()
                 .AddAuthor()
@@ -27,7 +28,7 @@ namespace Crabot.Commands.Commands.Handlers
                 .AddMessageFooter("TEST_FOOTER")
                 .Build();
 
-            await _discordRestClient.PostMessage(command.Message.ChannelId, 
+            await _discordRestClient.PostMessage(command.CalledFromChannel, 
                 new Message { Embed = embedMessage });
         }
     }

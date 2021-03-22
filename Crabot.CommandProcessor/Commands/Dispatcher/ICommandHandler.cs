@@ -1,10 +1,10 @@
 ﻿using System.Threading.Tasks;
+using Crabot.Commands.Commands.Models;
 
 namespace Crabot.Commands.Dispatcher
 {
-    public interface ICommandHandler<T>
-        where T : ICommand
+    public interface ICommandHandler
     {
-        Task HandleAsync(T command);
+        Task HandleAsync(Command command);
     }
 }
