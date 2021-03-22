@@ -25,7 +25,7 @@ namespace Crabot.Commands.Handlers
 
             var latency = DateTime.Now.Subtract(response.Data.Timestamp);
 
-            await _discordRestClient.EditMessage(response.Data.ChannelId,
+            await _discordRestClient.EditMessage(command.CalledFromChannel,
                 response.Data.Id, new Message { Content = $"{latency.Milliseconds}ms" });
         }
     }

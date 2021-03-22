@@ -10,12 +10,12 @@ using Crabot.Rest.RestClient;
 namespace Crabot.Commands.Handlers
 {
     [Command("error")]
-    public class CommandErrorHandler : ICommandHandler
+    public class ProcessingErrorCommandHandler : ICommandHandler
     {
         private readonly IDiscordRestClient _discordRestClient;
         private readonly IGuildRepository _guildRepository;
 
-        public CommandErrorHandler(IDiscordRestClient discordRestClient, 
+        public ProcessingErrorCommandHandler(IDiscordRestClient discordRestClient, 
             IGuildRepository guildRepository)
         {
             _discordRestClient = discordRestClient;
@@ -24,11 +24,11 @@ namespace Crabot.Commands.Handlers
 
         public async Task HandleAsync(Command command)
         {
-            var sadChamp = _guildRepository.GetGuild(command.CalledFromGuild)?
-                .Emojis.FirstOrDefault(x => x.Name == "SadChamp");
+            var huhChamp = _guildRepository.GetGuild(command.CalledFromGuild)?
+                .Emojis.FirstOrDefault(x => x.Name == "HuhChamp");
 
             await _discordRestClient.PostMessage(command.CalledFromChannel,
-                new Message { Content = $"Command not found! <:{sadChamp.Name}:{sadChamp.Id}>" });
+                new Message { Content = $"Invalid command <:{huhChamp.Name}:{huhChamp.Id}>" });
         }
     }
 }
