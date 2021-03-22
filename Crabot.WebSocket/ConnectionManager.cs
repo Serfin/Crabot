@@ -192,7 +192,7 @@ namespace Crabot.WebSocket
                 EventData = new IdentifyEvent
                 {
                     Token = Environment.GetEnvironmentVariable("BOT_TOKEN"),
-                    Intents = 513,
+                    Intents = 1791,
                     Compress = false,
                     Properties = new Dictionary<string, string> {
                             { "$os", "windows" },
