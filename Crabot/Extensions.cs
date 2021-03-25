@@ -32,22 +32,25 @@ namespace Crabot
             return services;
         }
 
-        internal static IServiceCollection AddDiscordSocketClient(this IServiceCollection services)
+        public static ContainerBuilder RegisterDiscordSocketClient(this ContainerBuilder containerBuilder)
         {
-            services.AddSingleton<IDiscordSocketClient, DiscordSocketClient>();
+            containerBuilder.RegisterType<DiscordSocketClient>()
+                .As<IDiscordSocketClient>()
+                .SingleInstance();
 
-            return services;
+            return containerBuilder;
         }
 
-        internal static IServiceCollection AddGatewayEventHandlers(this IServiceCollection services)
+        public static ContainerBuilder RegisterGatewayEventHandlers(this ContainerBuilder containerBuilder)
         {
-            services.AddTransient<IGatewayEventHandler<ReadyEvent>, ReadyEventHandler>();
-            services.AddTransient<IGatewayEventHandler<Guild>, GuildCreateEventHandler>();
+            containerBuilder.RegisterAssemblyTypes(typeof(IGatewayEventHandler<>).Assembly)
+                .AsClosedTypesOf(typeof(IGatewayEventHandler<>))
+                .InstancePerLifetimeScope();
 
-            return services;
+            return containerBuilder;
         }
 
-        public static ContainerBuilder RegisterCommandHandler(this ContainerBuilder containerBuilder)
+        public static ContainerBuilder RegisterCommandHandlers(this ContainerBuilder containerBuilder)
         {
             var commandAssembly = typeof(CommandProcessor).Assembly;
 

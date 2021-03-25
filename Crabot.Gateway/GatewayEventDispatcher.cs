@@ -1,11 +1,8 @@
-﻿
-using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Autofac;
 using Crabot.Commands;
 using Crabot.Contracts;
 using Crabot.Core.Events;
-using Crabot.Rest.RestClient;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Crabot.Gateway
@@ -14,16 +11,16 @@ namespace Crabot.Gateway
     {
         private readonly ILogger _logger;
         private readonly ICommandProcessor _commandProcessor;
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IComponentContext _componentContext;
 
         public GatewayEventDispatcher(
             ILogger<GatewayEventDispatcher> logger, 
-            ICommandProcessor commandProcessor, 
-            IServiceProvider serviceProvider)
+            ICommandProcessor commandProcessor,
+            IComponentContext componentContext)
         {
             _logger = logger;
             _commandProcessor = commandProcessor;
-            _serviceProvider = serviceProvider;
+            _componentContext = componentContext;
         }
 
         public async Task DispatchEvent(GatewayPayload @event)
@@ -35,15 +32,27 @@ namespace Crabot.Gateway
                         await _commandProcessor.ProcessMessageAsync(@event);
                     }
                     break;
+                case "MESSAGE_REACTION_ADD":
+                    {
+                        await _componentContext.Resolve<IGatewayEventHandler<MessageReactionAdd>>()
+                                .HandleAsync(@event.EventData);
+                    }
+                    break;
+                case "MESSAGE_REACTION_REMOVE":
+                    {
+                        await _componentContext.Resolve<IGatewayEventHandler<MessageReactionRemove>>()
+                                .HandleAsync(@event.EventData);
+                    }
+                    break;
                 case "GUILD_CREATE":
                     {
-                        await _serviceProvider.GetRequiredService<IGatewayEventHandler<Guild>>()
+                        await _componentContext.Resolve<IGatewayEventHandler<Guild>>()
                             .HandleAsync(@event.EventData);
                     }
                     break;
                 case "READY":
                     {
-                        await _serviceProvider.GetRequiredService<IGatewayEventHandler<ReadyEvent>>()
+                        await _componentContext.Resolve<IGatewayEventHandler<ReadyEvent>>()
                             .HandleAsync(@event.EventData);
                     }
                     break;

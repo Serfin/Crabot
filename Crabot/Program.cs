@@ -49,17 +49,17 @@ namespace Crabot
                 .AddTransient<ICommandProcessor, CommandProcessor>()
                 .AddTransient<IGatewayEventDispatcher, GatewayEventDispatcher>()
                 .AddTransient<ICommandDispatcher, CommandDispatcher>()
-                .AddGatewayEventHandlers()
                 .AddSingleton<IConnectionManager, ConnectionManager>()
                 .AddTransient<IGuildRepository, GuildRepository>()
                 .AddTransient<IClientInfoRepository, ClientInfoRepository>()
-                .AddDicordRestClient(_configuration)
-                .AddDiscordSocketClient();
+                .AddDicordRestClient(_configuration);
 
             var containerBuilder = new ContainerBuilder();
             containerBuilder.Populate(services);
-            containerBuilder.RegisterCommandHandler();
-          
+            containerBuilder.RegisterCommandHandlers();
+            containerBuilder.RegisterGatewayEventHandlers();
+            containerBuilder.RegisterDiscordSocketClient();
+
             var container = containerBuilder.Build();
 
             return new AutofacServiceProvider(container);
