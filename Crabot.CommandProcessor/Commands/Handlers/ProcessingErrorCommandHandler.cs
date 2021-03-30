@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using Crabot.Commands.Commands;
-using Crabot.Commands.Commands.Models;
 using Crabot.Commands.Dispatcher;
 using Crabot.Core.Repositories;
 using Crabot.Rest.Models;

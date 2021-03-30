@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Crabot.Contracts;
 
-namespace Crabot.Commands.Commands.Models
+namespace Crabot.Commands.Dispatcher
 {
     public class Command
     {
@@ -15,7 +15,7 @@ namespace Crabot.Commands.Commands.Models
         public Command(Message message)
         {
             Caller = message.Member;
-            Arguments = message.Content.Split(' ');
+            Arguments = message.Content.Split(' ')[1..];
             CommandName = message.Content.ToLower()[1..];
             CalledFromChannel = message.ChannelId;
             CalledFromGuild = message.GuildId;

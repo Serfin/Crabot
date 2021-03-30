@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Crabot.Commands.Commands;
-using Crabot.Commands.Commands.Models;
 using Crabot.Commands.Dispatcher;
 using Crabot.Rest.Models;
 using Crabot.Rest.RestClient;

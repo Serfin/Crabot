@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using Crabot.Commands.Commands.Models;
 using Crabot.Commands.Dispatcher;
 using Crabot.MessageExtensions;
 using Crabot.Rest.Models;

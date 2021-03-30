@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Autofac;
-using Crabot.Commands.Commands.Models;
+using Crabot.Commands.Dispatcher;
 using Microsoft.Extensions.Logging;
 
 namespace Crabot.Commands.Dispatcher
