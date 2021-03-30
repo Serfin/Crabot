@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Crabot.Commands.Commands;
 using Crabot.Commands.Dispatcher;
 using Crabot.Contracts;

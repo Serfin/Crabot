@@ -27,7 +27,7 @@ namespace Crabot.Commands.Dispatcher
             {
 				await _component.ResolveKeyed<ICommandHandler>("error").HandleAsync(command);
 
-				throw new ApplicationException("Specified command does not have assigned handler!");
+				return;
 			}
 
 			var commandHandler = _component.ResolveKeyed<ICommandHandler>(command.CommandName);

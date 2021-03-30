@@ -7,6 +7,7 @@ using Crabot.Commands.Commands;
 using Crabot.Commands.Dispatcher;
 using Crabot.Contracts;
 using Crabot.Core.Events;
+using Crabot.Core.Repositories;
 using Crabot.Gateway;
 using Crabot.Gateway.EventHandlers;
 using Crabot.Rest.RestClient;
@@ -45,6 +46,18 @@ namespace Crabot
         {
             containerBuilder.RegisterAssemblyTypes(typeof(IGatewayEventHandler<>).Assembly)
                 .AsClosedTypesOf(typeof(IGatewayEventHandler<>))
+                .InstancePerLifetimeScope();
+
+            return containerBuilder;
+        }
+
+        public static ContainerBuilder RegisterRepositories(this ContainerBuilder containerBuilder)
+        {
+            var commandAssembly = typeof(UserPointsRepository).Assembly;
+
+            containerBuilder.RegisterAssemblyTypes(commandAssembly)
+                .Where(x => x.Name.EndsWith("Repository"))
+                .AsImplementedInterfaces()
                 .InstancePerLifetimeScope();
 
             return containerBuilder;
