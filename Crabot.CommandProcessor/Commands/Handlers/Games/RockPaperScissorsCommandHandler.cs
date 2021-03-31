@@ -15,6 +15,7 @@ namespace Crabot.Commands.Commands.Handlers.Games
 
         private Command _command;
         private float gameBounty;
+        private float userBalance;
         private string[] possibleSymbols = { ":rock:", ":roll_of_paper:", ":scissors:" };
 
         public RockPaperScissorsCommandHandler(
@@ -54,15 +55,32 @@ namespace Crabot.Commands.Commands.Handlers.Games
             }
 
             gameBounty = requiredBalance;
-            //var userCurrentBalance = await _userPointsRepository.GetUserBalanceAsync(command.Author.Id);
-            //if (userCurrentBalance < requiredBalance)
-            //{
-            //    return (false, $"User **{command.Author.Username}** does not have enough points");
-            //} 
-            //else
-            //{
-            //    userBalance = userCurrentBalance;
-            //}
+            var userCurrentBalance = await _userPointsRepository.GetUserBalanceAsync(command.Author.Id);
+            var opponentsBalance = await _userPointsRepository.GetUserBalanceAsync(_command.Arguments[0].Substring(3, _command.Arguments[0].Length - 4));
+            
+            if (userCurrentBalance is null)
+            {
+                return (false, $"User does not own a wallet, use ?register to create wallet");
+            }
+
+            if (opponentsBalance is null)
+            {
+                return (false, $"Opponent **{_command.Arguments[0]}** does not own a wallet");
+            }
+
+            if (opponentsBalance < requiredBalance)
+            {
+                return (false, $"Opponent **{_command.Arguments[0]}** does not have enough money to play");
+            }
+
+            if (userCurrentBalance < requiredBalance)
+            {
+                return (false, $"User **{command.Author.Username}** does not have enough points");
+            }
+            else
+            {
+                userBalance = userCurrentBalance.Value;
+            }
 
             return (true, string.Empty);
         }
@@ -107,7 +125,24 @@ namespace Crabot.Commands.Commands.Handlers.Games
                 attackerWon = false;
             }
 
+            await ManagePoints(attackerWon);
             await DisplayGameResult(attackerWon, attackerRoll, defenderRoll);
+        }
+
+        private async Task ManagePoints(bool attackerWon)
+        {
+            var oppenentId = _command.Arguments[0].Substring(3, _command.Arguments[0].Length - 4);
+
+            if (attackerWon)
+            {
+                await _userPointsRepository.AddBalanceToUserAccount(_command.Author.Id, gameBounty);
+                await _userPointsRepository.SubtractBalanceFromUserAccount(oppenentId, gameBounty);
+            }
+            else
+            {
+                await _userPointsRepository.AddBalanceToUserAccount(oppenentId, gameBounty);
+                await _userPointsRepository.SubtractBalanceFromUserAccount(_command.Author.Id, gameBounty);
+            }
         }
 
         private async Task DisplayGameResult(bool attackerWon, int attackerRoll, int defenderRoll)
@@ -127,7 +162,7 @@ namespace Crabot.Commands.Commands.Handlers.Games
                 await _discordRestClient.PostMessage(_command.CalledFromChannel,
                     new Message
                     {
-                        Content = $"**{_command.Author.Username}** lost **{gameBounty}**  points! " +
+                        Content = $"**{_command.Author.Username}** lost **{gameBounty}** points! " +
                                   $"[**{_command.Author.Username}** - {possibleSymbols[attackerRoll]} | " +
                                   $"**{_command.Arguments[0]}** - {possibleSymbols[defenderRoll]}]"
                     });

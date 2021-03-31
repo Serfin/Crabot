@@ -23,16 +23,16 @@ namespace Crabot.Commands.Commands.Handlers.Games
         {
             var userPoints = await _userPointsRepository.GetUserBalanceAsync(command.Author.Id);
 
-            if (command.Author.Username == "Fonter")
+            if (userPoints is null)
             {
                 await _discordRestClient.PostMessage(command.CalledFromChannel,
-                    new Message { Content = $"**{command.Author.Username}** currently has **{decimal.MaxValue}** points" });
+                    new Message { Content = $"Can't find your wallet. Use ?register to create wallet" });
+
+                return;
             }
-            else
-            {
-                await _discordRestClient.PostMessage(command.CalledFromChannel,
-                    new Message { Content = $"**{command.Author.Username}** currently has **{userPoints}** points" });
-            }
+                        
+            await _discordRestClient.PostMessage(command.CalledFromChannel,
+                new Message { Content = $"**{command.Author.Username}** currently has **{userPoints}** points" });
         }
     }
 }
