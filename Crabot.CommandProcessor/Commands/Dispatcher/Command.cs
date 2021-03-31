@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Crabot.Contracts;
 
 namespace Crabot.Commands.Dispatcher
@@ -12,12 +13,11 @@ namespace Crabot.Commands.Dispatcher
         public string CalledFromChannel { get; private set; }
         public string CalledFromGuild { get; private set; }
 
-
         public Command(Message message)
         {
             Member = message.Member;
             Author = message.Author;
-            Arguments = message.Content.Split(' ')[1..];
+            Arguments = message.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1..];
             CommandName = message.Content.Split(' ')[0].ToLowerInvariant()[1..];
             CalledFromChannel = message.ChannelId;
             CalledFromGuild = message.GuildId;
