@@ -8,8 +8,8 @@ namespace Crabot.Commands.Dispatcher
     {
         public string CommandName { get; private set; }
         public IReadOnlyList<string> Arguments { get; private set; }
-        public Member Member { get; private set; }
-        public Author Author { get; private set; }
+        public Member Member { get; private set; } // Per server account 
+        public Author Author { get; private set; } // General Discord account
         public string CalledFromChannel { get; private set; }
         public string CalledFromGuild { get; private set; }
 

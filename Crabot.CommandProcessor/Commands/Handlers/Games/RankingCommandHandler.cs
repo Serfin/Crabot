@@ -36,7 +36,8 @@ namespace Crabot.Commands.Commands.Handlers.Games
 
             foreach (var user in users.OrderByDescending(x => x.Balance).Take(15))
             {
-                embedMessage.AddMessageField(new EmbedField($"<@{user.UserId}>", user.Balance.ToString()));
+                embedMessage.AddMessageField(new EmbedField($"{user.Nickname}", 
+                    user.Balance.ToString()));
             }
 
             embedMessage.AddMessageFooter(DateTime.Now.ToShortDateString());

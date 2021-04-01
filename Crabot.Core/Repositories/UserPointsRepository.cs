@@ -20,9 +20,9 @@ namespace Crabot.Core.Repositories
             await UpdateData(usersData);
         }
 
-        public async Task AddUserToSystem(string userId)
+        public async Task AddUserToSystem(string nickname, string userId)
         {
-            await File.AppendAllTextAsync(filePath, $"{userId}|0,0|{DateTime.Now.Subtract(TimeSpan.FromMinutes(10))};");
+            await File.AppendAllTextAsync(filePath, $"{nickname}|{userId}|0,0|{DateTime.Now.Subtract(TimeSpan.FromMinutes(10))};");
         }
 
         public async Task<float?> GetUserBalanceAsync(string userId)
@@ -76,7 +76,7 @@ namespace Crabot.Core.Repositories
                     continue;
                 }
 
-                result.Add(new UserPoint(userDataPair[0], float.Parse(userDataPair[1]), DateTime.Parse(userDataPair[2])));
+                result.Add(new UserPoint(userDataPair[0], userDataPair[1], float.Parse(userDataPair[2]), DateTime.Parse(userDataPair[3])));
             }
 
             return result;
@@ -88,7 +88,7 @@ namespace Crabot.Core.Repositories
 
             foreach (var pair in userdata)
             {
-                sb.Append($"{pair.UserId}|{pair.Balance}|{pair.DailyUsedAt};");
+                sb.Append($"{pair.Nickname}|{pair.UserId}|{pair.Balance}|{pair.DailyUsedAt};");
             }
 
             return sb.ToString();
@@ -102,13 +102,15 @@ namespace Crabot.Core.Repositories
 
     public class UserPoint
     {
-        public UserPoint(string userId, float balance, DateTime dailyUsedAt)
+        public UserPoint(string nickname, string userId, float balance, DateTime dailyUsedAt)
         {
+            Nickname = nickname;
             UserId = userId;
             Balance = balance;
             DailyUsedAt = dailyUsedAt;
         }
 
+        public string Nickname { get; set; }
         public string UserId { get; set; }
         public float Balance { get; set; }
         public DateTime DailyUsedAt { get; set; }
