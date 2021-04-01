@@ -12,6 +12,6 @@ namespace Crabot.MessageExtensions
         public DateTimeOffset? Timestamp { get; set; } // Footer datetime
         public EmbedFooter Footer { get; set; }
         public EmbedAuthor Author { get; set; }
-        public IEnumerable<EmbedField> Fields { get; set; }
+        public List<EmbedField> Fields { get; set; } = new List<EmbedField>();
     }
 }

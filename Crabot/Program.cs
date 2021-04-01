@@ -50,8 +50,6 @@ namespace Crabot
                 .AddTransient<IGatewayEventDispatcher, GatewayEventDispatcher>()
                 .AddTransient<ICommandDispatcher, CommandDispatcher>()
                 .AddSingleton<IConnectionManager, ConnectionManager>()
-                .AddTransient<IGuildRepository, GuildRepository>()
-                .AddTransient<IClientInfoRepository, ClientInfoRepository>()
                 .AddDicordRestClient(_configuration);
 
             var containerBuilder = new ContainerBuilder();
@@ -59,6 +57,7 @@ namespace Crabot
             containerBuilder.RegisterCommandHandlers();
             containerBuilder.RegisterGatewayEventHandlers();
             containerBuilder.RegisterDiscordSocketClient();
+            containerBuilder.RegisterRepositories();
 
             var container = containerBuilder.Build();
 

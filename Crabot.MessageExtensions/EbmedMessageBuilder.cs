@@ -31,11 +31,21 @@ namespace Crabot.MessageExtensions
             return this;
         }
 
+        public EbmedMessageBuilder AddMessageField(EmbedField field)
+        {
+            if (field != null)
+            {
+                _embedMessage.Fields.Add(field);
+            }
+
+            return this;
+        }
+
         public EbmedMessageBuilder AddMessageFields(params EmbedField[] fields)
         {
             if (fields != null)
             {
-                _embedMessage.Fields = fields;
+                _embedMessage.Fields.AddRange(fields);
             }
 
             return this;
@@ -45,7 +55,7 @@ namespace Crabot.MessageExtensions
         {
             if (fields != null)
             {
-                _embedMessage.Fields = fields;
+                _embedMessage.Fields.AddRange(fields);
             }
 
             return this;

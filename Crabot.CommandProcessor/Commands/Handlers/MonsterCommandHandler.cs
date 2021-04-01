@@ -86,7 +86,7 @@ namespace Crabot.Commands.Commands.Handlers
             foreach (var offerThread in offerThreads)
             {
                 yield return new EmbedField(
-                    string.Format("{0} - {1} | {2}", offerThread.NewPrice, offerThread.Temperature, offerThread.Title),
+                    string.Format("{0} - [{1}] | {2}", offerThread.NewPrice, offerThread.Temperature, offerThread.Title),
                     string.Format("{0} \n\n {1} \n {2}", offerThread.Description, offerThread.Merchant, offerThread.Link), false);
             }
         }
