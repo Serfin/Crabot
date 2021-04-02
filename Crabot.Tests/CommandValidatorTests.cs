@@ -14,7 +14,7 @@ namespace Crabot.Tests
 
         private string crabotFakeAuthorId = "112233445566778899";
 
-        [SetUp]
+        [OneTimeSetUp]
         public void Setup()
         {
             _clientInfoReposotoryMock = new Mock<IClientInfoRepository>();
@@ -29,7 +29,7 @@ namespace Crabot.Tests
         }
 
         [Test]
-        public void Command_with_prefix_is_valid_command()
+        public void Command_with_prefix_and_random_author_id_is_valid_command()
         {
             var testCommand = new GatewayMessage 
             { 

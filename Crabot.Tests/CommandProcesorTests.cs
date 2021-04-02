@@ -22,7 +22,7 @@ namespace Crabot.Tests
                 new GatewayMessage { Content = "?test-command" })
         };
 
-        [SetUp]
+        [OneTimeSetUp]
         public void Setup()
         {
             commandDispatcherMock = new Mock<ICommandDispatcher>();
