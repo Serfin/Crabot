@@ -11,9 +11,7 @@ namespace Crabot.Commands.Commands.Handlers.Games
         private readonly IUserPointsRepository _userPointsRepository;
         private readonly IDiscordRestClient _discordRestClient;
 
-        public GetPointsCommandHandler(
-            IUserPointsRepository userPointsRepository, 
-            IDiscordRestClient discordRestClient)
+        public GetPointsCommandHandler(IUserPointsRepository userPointsRepository, IDiscordRestClient discordRestClient)
         {
             _userPointsRepository = userPointsRepository;
             _discordRestClient = discordRestClient;

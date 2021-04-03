@@ -23,7 +23,7 @@ namespace Crabot.Commands
 
         public async Task ProcessMessageAsync(GatewayPayload payload)
         {
-            var message = JsonConvert.DeserializeObject<GatewayMessage>(payload.EventData.ToString());
+            var message = JsonConvert.DeserializeObject<Message>(payload.EventData.ToString());
 
             if (_commandValidator.IsCommand(message))
             {
