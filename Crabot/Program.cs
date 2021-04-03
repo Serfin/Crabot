@@ -55,6 +55,7 @@ namespace Crabot
             var containerBuilder = new ContainerBuilder();
             containerBuilder.Populate(services);
             containerBuilder.RegisterCommandHandlers();
+            containerBuilder.RegisterSqliteConnection();
             containerBuilder.RegisterGatewayEventHandlers();
             containerBuilder.RegisterDiscordSocketClient();
             containerBuilder.RegisterRepositories();

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -7,9 +8,10 @@ using System.Threading.Tasks;
 
 namespace Crabot.Core.Repositories
 {
-    public class UserPointsRepository : IUserPointsRepository
+    public class UserPointsRepository //: IUserPointsRepository
     {
-        private const string filePath = "./user_points_database.txt";
+        private readonly string filePath = Directory.GetParent(
+            Process.GetCurrentProcess().MainModule.FileName).FullName + "./user_points_database.txt";
 
         public async Task AddBalanceToUserAccount(string userId, float amountToAdd)
         {
@@ -98,21 +100,5 @@ namespace Crabot.Core.Repositories
         {
             await File.WriteAllTextAsync(filePath, FromUserPairData(userdata));
         }
-    }
-
-    public class UserPoint
-    {
-        public UserPoint(string nickname, string userId, float balance, DateTime dailyUsedAt)
-        {
-            Nickname = nickname;
-            UserId = userId;
-            Balance = balance;
-            DailyUsedAt = dailyUsedAt;
-        }
-
-        public string Nickname { get; set; }
-        public string UserId { get; set; }
-        public float Balance { get; set; }
-        public DateTime DailyUsedAt { get; set; }
     }
 }

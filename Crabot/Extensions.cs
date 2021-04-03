@@ -12,6 +12,7 @@ using Crabot.Gateway;
 using Crabot.Gateway.EventHandlers;
 using Crabot.Rest.RestClient;
 using Crabot.WebSocket;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -47,6 +48,21 @@ namespace Crabot
             containerBuilder.RegisterAssemblyTypes(typeof(IGatewayEventHandler<>).Assembly)
                 .AsClosedTypesOf(typeof(IGatewayEventHandler<>))
                 .InstancePerLifetimeScope();
+
+            return containerBuilder;
+        }
+
+        public static ContainerBuilder RegisterSqliteConnection(this ContainerBuilder containerBuilder)
+        {
+            containerBuilder.Register(ctx =>
+            {
+                var address = ctx.Resolve<IConfiguration>()
+                    .GetValue<string>("sqliteConnectionString");
+
+                return new SqliteConnection(address);
+            })
+            .AsSelf()
+            .InstancePerLifetimeScope();
 
             return containerBuilder;
         }
