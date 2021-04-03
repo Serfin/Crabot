@@ -1,4 +1,5 @@
-﻿using Crabot.Contracts;
+﻿using System;
+using Crabot.Contracts;
 using Crabot.Core.Repositories;
 
 namespace Crabot.Commands.Commands
@@ -12,7 +13,7 @@ namespace Crabot.Commands.Commands
             _clientInfoRepository = clientInfoRepository;
         }
 
-        public bool IsCommand(Message message)
+        public bool IsCommand(GatewayMessage message)
         {
             return message.Content.Length > 0
                 && message.Content.TrimStart()[0] == '?'

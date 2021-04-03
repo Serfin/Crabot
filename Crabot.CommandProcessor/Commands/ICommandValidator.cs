@@ -4,6 +4,6 @@ namespace Crabot.Commands.Commands
 {
     public interface ICommandValidator
     {
-        public bool IsCommand(Message message);
+        public bool IsCommand(GatewayMessage message);
     }
 }

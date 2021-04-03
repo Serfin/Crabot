@@ -13,7 +13,7 @@ namespace Crabot.Commands.Dispatcher
         public string CalledFromChannel { get; private set; }
         public string CalledFromGuild { get; private set; }
 
-        public Command(Message message)
+        public Command(GatewayMessage message)
         {
             Member = message.Member;
             Author = message.Author;
