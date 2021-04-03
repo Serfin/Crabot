@@ -1,7 +1,9 @@
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Crabot.Contracts;
 using Crabot.Rest.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -48,7 +50,7 @@ namespace Crabot.Rest.RestClient
             }
         }
         
-        public async Task<OperationResult<Contracts.Message>> PostMessage(string channelId, Message message)
+        public async Task<OperationResult<GatewayMessage>> PostMessage(string channelId, Message message)
         {
             try
             {
@@ -62,24 +64,33 @@ namespace Crabot.Rest.RestClient
                     _logger.LogCritical("[RES] {0} {1} {2}", (int)response.StatusCode, response.ReasonPhrase, 
                         await response.Content.ReadAsStringAsync());
 
-                    return new OperationResult<Contracts.Message>(null, response.StatusCode,
+                    if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                    {
+                        var rateLimit = JsonConvert.DeserializeObject<RateLimit>(
+                            await response.Content.ReadAsStringAsync());
+
+                        return await RetryPostMessage(rateLimit, channelId, message);
+                    }
+                    
+                    return new OperationResult<GatewayMessage>(null, response.StatusCode,
                         response.ReasonPhrase, await response.Content.ReadAsStringAsync());
                 }
                 else
                 {
-                    return new OperationResult<Contracts.Message>(JsonConvert.DeserializeObject<Contracts.Message>(
+                    return new OperationResult<GatewayMessage>(JsonConvert.DeserializeObject<GatewayMessage>(
                         await response.Content.ReadAsStringAsync()), response.StatusCode, 
                         response.ReasonPhrase, string.Empty);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogCritical("[ERR] Error during sending request ", ex.Message);
+                _logger.LogCritical("[ERR] Error during sending POST request ", ex.Message);
                 throw;
             }
         }
 
-        public async Task<OperationResult<Contracts.Message>> EditMessage(string channelId, string messageId, Message message)
+        public async Task<OperationResult<GatewayMessage>> EditMessage(string channelId, 
+            string messageId, Message message)
         {
             try
             {
@@ -93,21 +104,51 @@ namespace Crabot.Rest.RestClient
                     _logger.LogCritical("[RES] {0} {1} {2}", (int)response.StatusCode, response.ReasonPhrase,
                         await response.Content.ReadAsStringAsync());
 
-                    return new OperationResult<Contracts.Message>(null, response.StatusCode,
+                    if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                    {
+                        var rateLimit = JsonConvert.DeserializeObject<RateLimit>(
+                            await response.Content.ReadAsStringAsync());
+
+                        return await RetryEditMessage(rateLimit, channelId, messageId, message);
+                    }
+
+                    return new OperationResult<GatewayMessage>(null, response.StatusCode,
                         response.ReasonPhrase, await response.Content.ReadAsStringAsync());
                 }
                 else
                 {
-                    return new OperationResult<Contracts.Message>(JsonConvert.DeserializeObject<Contracts.Message>(
+                    return new OperationResult<GatewayMessage>(JsonConvert.DeserializeObject<GatewayMessage>(
                         await response.Content.ReadAsStringAsync()), response.StatusCode,
                         response.ReasonPhrase, string.Empty);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogCritical("[ERR] Error during sending request ", ex.Message);
+                _logger.LogCritical("[ERR] Error during sending PATCH request ", ex.Message);
                 throw;
             }
+        }
+    
+        private async Task<OperationResult<GatewayMessage>> RetryPostMessage(RateLimit rateLimit,
+            string channelId, Message message)
+        {
+            var retryAfter = (int)rateLimit.RetryAfter * 1000;
+            await Task.Delay(retryAfter);
+
+            _logger.LogWarning("Retrying POST request after rate limit - {0}ms", retryAfter);
+
+            return await PostMessage(channelId, message);
+        }
+
+        private async Task<OperationResult<GatewayMessage>> RetryEditMessage(RateLimit rateLimit,
+            string channelId, string messageId, Message message)
+        {
+            var retryAfter = (int)rateLimit.RetryAfter * 1000;
+            await Task.Delay(retryAfter);
+
+            _logger.LogWarning("Retrying PATCH request after rate limit - {0}ms", retryAfter);
+
+            return await EditMessage(channelId, messageId, message);
         }
     }
 }

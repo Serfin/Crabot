@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace Crabot.Contracts
 {
-    public class Message
+    public class GatewayMessage
     {
         [JsonProperty("type")]
         public int Type { get; set; }

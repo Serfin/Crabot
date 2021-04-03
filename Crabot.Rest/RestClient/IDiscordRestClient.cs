@@ -6,8 +6,8 @@ namespace Crabot.Rest.RestClient
     public interface IDiscordRestClient
     {
         Task<string> GetGatewayUrlAsync();
-        Task<OperationResult<Contracts.Message>> PostMessage(string channelId, Message message);
-        Task<OperationResult<Contracts.Message>> EditMessage(string channelId, string messageId, 
+        Task<OperationResult<Contracts.GatewayMessage>> PostMessage(string channelId, Message message);
+        Task<OperationResult<Contracts.GatewayMessage>> EditMessage(string channelId, string messageId, 
             Message message);
     }
 }
