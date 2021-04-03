@@ -16,6 +16,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F29BD121-EE45-4E6E-A461-AD3341401E4D}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
+		start-in-background.ps1 = start-in-background.ps1
+		stop-application.ps1 = stop-application.ps1
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crabot.WebSocket", "..\Crabot.WebSocket\Crabot.WebSocket.csproj", "{F423B802-4C15-47A8-A70E-B34C73E5E82A}"
