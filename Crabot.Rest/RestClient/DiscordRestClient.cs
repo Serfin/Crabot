@@ -61,7 +61,7 @@ namespace Crabot.Rest.RestClient
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogCritical("[RES] {0} {1} {2}", (int)response.StatusCode, response.ReasonPhrase, 
+                    _logger.LogError("[RES] {0} {1} {2}", (int)response.StatusCode, response.ReasonPhrase, 
                         await response.Content.ReadAsStringAsync());
 
                     if (response.StatusCode == HttpStatusCode.TooManyRequests)

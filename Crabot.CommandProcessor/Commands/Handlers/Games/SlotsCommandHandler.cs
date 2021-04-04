@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Crabot.Commands.Dispatcher;
@@ -9,8 +8,8 @@ using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Commands.Handlers.Games
 {
-    [Command("spin")]
-    public class SpinCommandHandler : ICommandHandler
+    [Command("slots")]
+    public class SlotsCommandHandler : ICommandHandler
     {
         private readonly IUserPointsRepository _userPointsRepository;
         private readonly IDiscordRestClient _discordRestClient;
@@ -34,7 +33,7 @@ namespace Crabot.Commands.Commands.Handlers.Games
             (":banana:", 10f)
         };
 
-        public SpinCommandHandler(
+        public SlotsCommandHandler(
             IUserPointsRepository userPointsRepository,
             IDiscordRestClient discordRestClient)
         {
@@ -112,17 +111,21 @@ namespace Crabot.Commands.Commands.Handlers.Games
         {
             var stringResult = string.Empty;
 
+            stringResult += "----- **[SLOTS]** -----\n";
+            stringResult += "----------------------\n";
             stringResult += $"[{GetBarrelSymbol(roll1 - 1)}] | [{GetBarrelSymbol(roll2 - 1)}] | [{GetBarrelSymbol(roll3 - 1)}] \n";
-            stringResult += $"**[{GetBarrelSymbol(roll1)}] | [{GetBarrelSymbol(roll2)}] | [{GetBarrelSymbol(roll3)}]** \n";
-            stringResult += $"[{GetBarrelSymbol(roll1 + 1)}] | [{GetBarrelSymbol(roll2 + 1)}] | [{GetBarrelSymbol(roll3 + 1)}]";
+            stringResult += $"**[{GetBarrelSymbol(roll1)}] | [{GetBarrelSymbol(roll2)}] | [{GetBarrelSymbol(roll3)}] < ** \n";
+            stringResult += $"[{GetBarrelSymbol(roll1 + 1)}] | [{GetBarrelSymbol(roll2 + 1)}] | [{GetBarrelSymbol(roll3 + 1)}]\n";
+            stringResult += "----------------------\n";
+
 
             if (gameWon)
             {
-                stringResult += $"\n\n User **{_command.Author.Username}** won **{gameBounty * gameWeightMultiplier}** points!";
+                stringResult += $"**| : : : : :  WIN : : : : : |**  \n\n **{_command.Author.Username}** used **{_command.Arguments[0]}** credit(s) and won **{gameBounty * gameWeightMultiplier:0.##}** credits!";
             }
             else
             {
-                stringResult += $"\n\n User **{_command.Author.Username}** lost **{gameBounty}** points!";
+                stringResult += $"**|: : : : :  LOST : : : : :|**  \n\n **{_command.Author.Username}** used **{gameBounty}** credit(s) and lost everything!";
             }
 
 
