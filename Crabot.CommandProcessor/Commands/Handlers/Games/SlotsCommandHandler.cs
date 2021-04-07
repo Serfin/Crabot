@@ -21,10 +21,10 @@ namespace Crabot.Commands.Commands.Handlers.Games
         private readonly (string Symbol, float Weight)[] Barrel = 
             new (string, float)[]
         {
-            (":apple:", 1.1f),
-            (":tangerine:", 1.2f),
-            (":lemon:", 1.2f),
-            (":watermelon:", 1.3f),
+            (":apple:", 1f),
+            (":tangerine:", 1f),
+            (":lemon:", 1.1f),
+            (":watermelon:", 1.2f),
             (":strawberry:", 1.3f),
             (":melon:", 1.5f),
             (":cherries:", 3f),
@@ -99,7 +99,8 @@ namespace Crabot.Commands.Commands.Handlers.Games
         {
             if (gameWon)
             {
-                await _userPointsRepository.AddBalanceToUserAccount(_command.Author.Id, gameBounty * gameWeightMultiplier);
+                await _userPointsRepository.AddBalanceToUserAccount(_command.Author.Id, 
+                    (gameBounty * gameWeightMultiplier) - gameBounty);
             }
             else
             {
@@ -152,12 +153,12 @@ namespace Crabot.Commands.Commands.Handlers.Games
         {
             if (command.Arguments.Count != 1)
             {
-                return (false, "Invalid command structure - ?spin <amount_to_bet>");
+                return (false, "Invalid command structure - ?slots <amount_to_bet>");
             }
 
             if (!float.TryParse(command.Arguments[0], out float result))
             {
-                return (false, "Invalid bet amount - ?spin <amount_to_bet>");
+                return (false, "Invalid bet amount - ?slots <amount_to_bet>");
             }
 
             gameBounty = result;
