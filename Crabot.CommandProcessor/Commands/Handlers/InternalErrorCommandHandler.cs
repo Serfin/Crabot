@@ -1,20 +1,19 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-using Crabot.Commands.Commands;
 using Crabot.Commands.Dispatcher;
 using Crabot.Core.Repositories;
 using Crabot.Rest.Models;
 using Crabot.Rest.RestClient;
 
-namespace Crabot.Commands.Handlers
+namespace Crabot.Commands.Commands.Handlers
 {
-    [Command("error")]
-    public class ProcessingErrorCommandHandler : ICommandHandler
+    [Command("internal-application-error")]
+    public class InternalErrorCommandHandler : ICommandHandler
     {
         private readonly IDiscordRestClient _discordRestClient;
         private readonly IGuildRepository _guildRepository;
 
-        public ProcessingErrorCommandHandler(IDiscordRestClient discordRestClient, 
+        public InternalErrorCommandHandler(IDiscordRestClient discordRestClient,
             IGuildRepository guildRepository)
         {
             _discordRestClient = discordRestClient;
@@ -23,11 +22,11 @@ namespace Crabot.Commands.Handlers
 
         public async Task HandleAsync(Command command)
         {
-            var huhChamp = _guildRepository.GetGuild(command.CalledFromGuild)?
-                .Emojis.FirstOrDefault(x => x.Name == "HuhChamp");
+            var sadChamp = _guildRepository.GetGuild(command.CalledFromGuild)?
+                .Emojis.FirstOrDefault(x => x.Name == "SadChamp");
 
             await _discordRestClient.PostMessage(command.CalledFromChannel,
-                new Message { Content = $"Invalid command <:{huhChamp.Name}:{huhChamp.Id}>" });
+                new Message { Content = $"Internal application error <:{sadChamp.Name}:{sadChamp.Id}>" });
         }
     }
 }

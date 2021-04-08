@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Autofac;
-using Crabot.Commands.Dispatcher;
 using Microsoft.Extensions.Logging;
 
 namespace Crabot.Commands.Dispatcher
@@ -25,7 +24,8 @@ namespace Crabot.Commands.Dispatcher
 
 			if (!isRegistered)
             {
-				await _component.ResolveKeyed<ICommandHandler>("error").HandleAsync(command);
+				await _component.ResolveKeyed<ICommandHandler>("command-not-found")
+					.HandleAsync(command);
 
 				return;
 			}
@@ -40,7 +40,8 @@ namespace Crabot.Commands.Dispatcher
             {
 				_logger.LogError("Error during processing command: {0} \n {1}", ex.Message, ex.StackTrace);
 			
-				await _component.ResolveKeyed<ICommandHandler>("error").HandleAsync(command);
+				await _component.ResolveKeyed<ICommandHandler>("internal-application-error")
+					.HandleAsync(command);
             }
 		}
 	}
