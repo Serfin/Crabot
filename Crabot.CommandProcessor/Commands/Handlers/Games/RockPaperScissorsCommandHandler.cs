@@ -49,14 +49,23 @@ namespace Crabot.Commands.Commands.Handlers.Games
                 return (false, $"Invalid amount of arguments. Command requires 2 argument ?rps <user> <amount>");
             }
 
-            if (!float.TryParse(command.Arguments[1], out float requiredBalance))
+            var gameBetParseResult = float.TryParse(command.Arguments[1], out float gameBet);
+            if (gameBetParseResult)
             {
-                return (false, $"Invalid command structure - rpc <user> <points_to_bet>");
+                if (gameBet <= 0)
+                {
+                    return (false, $"Invalid bet amount");
+                }
+            }
+            else
+            {
+                return (false, $"Invalid command structure - rps <user> <points_to_bet>");
             }
 
-            gameBounty = requiredBalance;
+            gameBounty = gameBet;
             var userCurrentBalance = await _userPointsRepository.GetUserBalanceAsync(command.Author.Id);
-            var opponentsBalance = await _userPointsRepository.GetUserBalanceAsync(_command.Arguments[0].Substring(3, _command.Arguments[0].Length - 4));
+            var opponentsBalance = await _userPointsRepository.GetUserBalanceAsync(_command.Arguments[0]
+                .Substring(3, _command.Arguments[0].Length - 4));
             
             if (userCurrentBalance is null)
             {
@@ -68,12 +77,12 @@ namespace Crabot.Commands.Commands.Handlers.Games
                 return (false, $"Opponent **{_command.Arguments[0]}** does not own a wallet");
             }
 
-            if (opponentsBalance < requiredBalance)
+            if (opponentsBalance < gameBet)
             {
                 return (false, $"Opponent **{_command.Arguments[0]}** does not have enough money to play");
             }
 
-            if (userCurrentBalance < requiredBalance)
+            if (userCurrentBalance < gameBet)
             {
                 return (false, $"User **{command.Author.Username}** does not have enough points");
             }

@@ -21,11 +21,11 @@ namespace Crabot.Commands.Commands.Handlers.Games
         private readonly (string Symbol, float Weight)[] Barrel = 
             new (string, float)[]
         {
-            (":apple:", 1f),
-            (":tangerine:", 1f),
-            (":lemon:", 1.1f),
-            (":watermelon:", 1.2f),
-            (":strawberry:", 1.3f),
+            (":apple:", 1.1f),
+            (":tangerine:", 1.1f),
+            (":lemon:", 1.2f),
+            (":watermelon:", 1.3f),
+            (":strawberry:", 1.4f),
             (":melon:", 1.5f),
             (":cherries:", 3f),
             (":peach:", 5f),
@@ -156,12 +156,21 @@ namespace Crabot.Commands.Commands.Handlers.Games
                 return (false, "Invalid command structure - ?slots <amount_to_bet>");
             }
 
-            if (!float.TryParse(command.Arguments[0], out float result))
+            var gameBetParseResult = float.TryParse(command.Arguments[0], out float gameBet);
+
+            if (gameBetParseResult)
+            {
+                if (gameBet <= 0)
+                {
+                    return (false, $"Invalid bet amount");
+                }
+            }
+            else
             {
                 return (false, "Invalid bet amount - ?slots <amount_to_bet>");
             }
 
-            gameBounty = result;
+            gameBounty = gameBet;
 
             return (true, string.Empty);
         }
