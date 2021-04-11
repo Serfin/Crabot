@@ -5,7 +5,6 @@ using Autofac.Extensions.DependencyInjection;
 using Crabot.Commands;
 using Crabot.Commands.Commands;
 using Crabot.Commands.Dispatcher;
-using Crabot.Core.Repositories;
 using Crabot.Gateway;
 using Crabot.WebSocket;
 using Microsoft.Extensions.Configuration;
@@ -55,7 +54,7 @@ namespace Crabot
             var containerBuilder = new ContainerBuilder();
             containerBuilder.Populate(services);
             containerBuilder.RegisterCommandHandlers();
-            containerBuilder.RegisterSqliteConnection();
+            containerBuilder.RegisterSqliteConnections();
             containerBuilder.RegisterGatewayEventHandlers();
             containerBuilder.RegisterDiscordSocketClient();
             containerBuilder.RegisterRepositories();

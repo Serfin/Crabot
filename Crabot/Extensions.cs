@@ -52,16 +52,26 @@ namespace Crabot
             return containerBuilder;
         }
 
-        public static ContainerBuilder RegisterSqliteConnection(this ContainerBuilder containerBuilder)
+        public static ContainerBuilder RegisterSqliteConnections(this ContainerBuilder containerBuilder)
         {
             containerBuilder.Register(ctx =>
             {
                 var address = ctx.Resolve<IConfiguration>()
-                    .GetValue<string>("sqliteConnectionString");
+                    .GetValue<string>("trackedMessagesDatabase");
 
-                return new SqliteConnection(address);
+                return new TrackedMessageRepository(new SqliteConnection(address));
             })
-            .AsSelf()
+            .As<ITrackedMessageRepository>()
+            .InstancePerLifetimeScope();
+
+            containerBuilder.Register(ctx =>
+            {
+                var address = ctx.Resolve<IConfiguration>()
+                    .GetValue<string>("usersDatabase");
+
+                return new SqliteUserPointsRepository(new SqliteConnection(address));
+            })
+            .As<IUserPointsRepository>()
             .InstancePerLifetimeScope();
 
             return containerBuilder;
@@ -73,6 +83,8 @@ namespace Crabot
 
             containerBuilder.RegisterAssemblyTypes(commandAssembly)
                 .Where(x => x.Name.EndsWith("Repository"))
+                .Except<SqliteUserPointsRepository>()
+                .Except<TrackedMessageRepository>()
                 .AsImplementedInterfaces()
                 .InstancePerLifetimeScope();
 
