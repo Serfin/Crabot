@@ -21,12 +21,12 @@ namespace Crabot.Commands.Commands.Handlers.Games
         private readonly (string Symbol, float Weight)[] Barrel = 
             new (string, float)[]
         {
-            (":apple:", 1.1f),
-            (":tangerine:", 1.1f),
-            (":lemon:", 1.2f),
-            (":watermelon:", 1.3f),
-            (":strawberry:", 1.4f),
-            (":melon:", 1.5f),
+            (":apple:", 1.4f),
+            (":tangerine:", 1.4f),
+            (":lemon:", 1.5f),
+            (":watermelon:", 1.6f),
+            (":strawberry:", 2.0f),
+            (":melon:", 2.5f),
             (":cherries:", 3f),
             (":peach:", 5f),
             (":kiwi:", 7f),

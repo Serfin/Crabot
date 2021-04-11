@@ -14,8 +14,7 @@ namespace Crabot.Commands.Commands.Handlers.Games
         private readonly IDiscordRestClient _discordRestClient;
 
         private Command _command;
-        private float gameBounty;
-        private float userBalance;
+        private float gameBounty, attackerBalance, defenderBalance;
         private string[] possibleSymbols = { ":rock:", ":roll_of_paper:", ":scissors:" };
 
         public RockPaperScissorsCommandHandler(
@@ -86,10 +85,9 @@ namespace Crabot.Commands.Commands.Handlers.Games
             {
                 return (false, $"User **{command.Author.Username}** does not have enough points");
             }
-            else
-            {
-                userBalance = userCurrentBalance.Value;
-            }
+
+            attackerBalance = userCurrentBalance.Value;
+            defenderBalance = opponentsBalance.Value;
 
             return (true, string.Empty);
         }
@@ -144,11 +142,17 @@ namespace Crabot.Commands.Commands.Handlers.Games
 
             if (attackerWon)
             {
+                attackerBalance += gameBounty;
+                defenderBalance -= gameBounty;
+
                 await _userPointsRepository.AddBalanceToUserAccount(_command.Author.Id, gameBounty);
                 await _userPointsRepository.SubtractBalanceFromUserAccount(oppenentId, gameBounty);
             }
             else
             {
+                attackerBalance -= gameBounty;
+                defenderBalance += gameBounty;
+
                 await _userPointsRepository.AddBalanceToUserAccount(oppenentId, gameBounty);
                 await _userPointsRepository.SubtractBalanceFromUserAccount(_command.Author.Id, gameBounty);
             }
@@ -162,8 +166,8 @@ namespace Crabot.Commands.Commands.Handlers.Games
                     new Message
                     {
                         Content = $"**{_command.Author.Username}** won **{gameBounty * 2}** points! " +
-                                  $"[**{_command.Author.Username}** - {possibleSymbols[attackerRoll]} | " +
-                                  $"**{_command.Arguments[0]}** - {possibleSymbols[defenderRoll]}]"
+                                  $"[**{_command.Author.Username}** - {possibleSymbols[attackerRoll]} - {attackerBalance} | " +
+                                  $"**{_command.Arguments[0]}** - {possibleSymbols[defenderRoll]} - {defenderBalance}]"
                     });
             }
             else
@@ -172,8 +176,8 @@ namespace Crabot.Commands.Commands.Handlers.Games
                     new Message
                     {
                         Content = $"**{_command.Author.Username}** lost **{gameBounty}** points! " +
-                                  $"[**{_command.Author.Username}** - {possibleSymbols[attackerRoll]} | " +
-                                  $"**{_command.Arguments[0]}** - {possibleSymbols[defenderRoll]}]"
+                                  $"[**{_command.Author.Username}** - {possibleSymbols[attackerRoll]} - {attackerBalance} | " +
+                                  $"**{_command.Arguments[0]}** - {possibleSymbols[defenderRoll]} - {defenderBalance}]"
                     });
             }
         }
