@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Crabot.Commands.Commands;
 using Crabot.Commands.Dispatcher;
 using Crabot.Contracts;
@@ -30,6 +29,24 @@ namespace Crabot.Commands
                 var command = new Command(message);
 
                 await _commandDispatcher.DispatchAsync(command);
+            }
+        }
+
+        public async Task ProcessReactionAsync(GatewayPayload reaction)
+        {
+            if (reaction.EventName == "MESSAGE_REACTION_ADD")
+            {
+                var reactionAdd = JsonConvert.DeserializeObject<MessageReactionAdd>(
+                    reaction.EventData.ToString());
+
+                await _commandDispatcher.DispatchAsync(new Reaction(reactionAdd));
+            }
+            else // MESSAGE_REACTION_REMOVE
+            {
+                var reactionRemove = JsonConvert.DeserializeObject<MessageReactionRemove>(
+                    reaction.EventData.ToString());
+
+                await _commandDispatcher.DispatchAsync(new Reaction(reactionRemove));
             }
         }
     }

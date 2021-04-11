@@ -1,11 +1,12 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using Crabot.Commands.Commands;
 using Crabot.Commands.Dispatcher;
 using Crabot.Core.Repositories;
 using Crabot.Rest.Models;
 using Crabot.Rest.RestClient;
 
-namespace Crabot.Commands.Commands.Handlers
+namespace Crabot.Commands.Handlers
 {
     [Command("internal-application-error")]
     public class InternalErrorCommandHandler : ICommandHandler

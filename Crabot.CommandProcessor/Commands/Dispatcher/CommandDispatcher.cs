@@ -20,21 +20,19 @@ namespace Crabot.Commands.Dispatcher
 
         public async Task DispatchAsync(Command command)
 		{
-			var isRegistered = _component.IsRegisteredWithKey<ICommandHandler>(command.CommandName);
-
-			if (!isRegistered)
-            {
-				await _component.ResolveKeyed<ICommandHandler>("command-not-found")
-					.HandleAsync(command);
-
-				return;
-			}
-
-			var commandHandler = _component.ResolveKeyed<ICommandHandler>(command.CommandName);
-
 			try
             {
-				await commandHandler.HandleAsync(command);
+				var isRegistered = _component.IsRegisteredWithKey<ICommandHandler>(command.CommandName);
+				if (!isRegistered)
+				{
+					await _component.ResolveKeyed<ICommandHandler>("command-not-found")
+						.HandleAsync(command);
+
+					return;
+				}
+
+				await _component.ResolveKeyed<ICommandHandler>(command.CommandName)
+					.HandleAsync(command);
             }
 			catch (Exception ex)
             {
@@ -44,5 +42,10 @@ namespace Crabot.Commands.Dispatcher
 					.HandleAsync(command);
             }
 		}
-	}
+
+        public Task DispatchAsync(Reaction reaction)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

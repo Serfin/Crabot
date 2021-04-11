@@ -6,5 +6,6 @@ namespace Crabot.Commands
     public interface ICommandProcessor
     {
         Task ProcessMessageAsync(GatewayPayload message);
+        Task ProcessReactionAsync(GatewayPayload reaction);
     }
 }

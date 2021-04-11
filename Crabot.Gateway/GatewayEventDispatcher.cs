@@ -32,16 +32,19 @@ namespace Crabot.Gateway
                         await _commandProcessor.ProcessMessageAsync(@event);
                     }
                     break;
+                case "MESSAGE_DELETE":
+                    {
+                        // Delete tracked message
+                    }
+                    break;
                 case "MESSAGE_REACTION_ADD":
                     {
-                        await _componentContext.Resolve<IGatewayEventHandler<MessageReactionAdd>>()
-                                .HandleAsync(@event.EventData);
+                        await _commandProcessor.ProcessReactionAsync(@event);
                     }
                     break;
                 case "MESSAGE_REACTION_REMOVE":
                     {
-                        await _componentContext.Resolve<IGatewayEventHandler<MessageReactionRemove>>()
-                                .HandleAsync(@event.EventData);
+                        await _commandProcessor.ProcessReactionAsync(@event);
                     }
                     break;
                 case "GUILD_CREATE":
