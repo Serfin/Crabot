@@ -1,8 +1,6 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Crabot.Commands.Dispatcher;
 using Crabot.Core.Repositories;
-using Crabot.Rest.Models;
 using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Commands.Handlers.Games
@@ -28,13 +26,13 @@ namespace Crabot.Commands.Commands.Handlers.Games
             if (userPoints is null)
             {
                 await _discordRestClient.PostMessage(command.CalledFromChannel,
-                    new Message { Content = $"Can't find your wallet. Use ?register to create wallet" });
+                    "Can't find your wallet. Use ?register to create wallet");
 
                 return;
             }
                         
             await _discordRestClient.PostMessage(command.CalledFromChannel,
-                new Message { Content = $"**{command.Author.Username}** currently has **{userPoints}** points" });
+                $"**{command.Author.Username}** currently has **{string.Format("{0:0.##}", userPoints)}** points");
         }
     }
 }

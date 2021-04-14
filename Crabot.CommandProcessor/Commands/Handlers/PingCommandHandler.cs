@@ -19,10 +19,11 @@ namespace Crabot.Commands.Handlers
 
         public async Task HandleAsync(Command command)
         {
+            var requestSendTime = DateTime.Now;
             var response = await _discordRestClient.PostMessage(command.CalledFromChannel, 
                 new Message { Content = "Calculating..." });
 
-            var latency = DateTime.Now.Subtract(response.Data.Timestamp);
+            var latency = response.Data.Timestamp - requestSendTime;
 
             await _discordRestClient.EditMessage(command.CalledFromChannel,
                 response.Data.Id, new Message { Content = $"{latency.Milliseconds}ms" });
