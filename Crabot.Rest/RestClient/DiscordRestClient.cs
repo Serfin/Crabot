@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -48,6 +49,11 @@ namespace Crabot.Rest.RestClient
                 _logger.LogCritical("Cannot fetch Gateway address ", ex.Message);
                 throw;
             }
+        }
+
+        public async Task<OperationResult<GatewayMessage>> PostMessage(string channelId, string contentMessage)
+        {
+            return await PostMessage(channelId, new Message { Content = contentMessage });
         }
         
         public async Task<OperationResult<GatewayMessage>> PostMessage(string channelId, Message message)
@@ -128,6 +134,57 @@ namespace Crabot.Rest.RestClient
                 throw;
             }
         }
+
+        public async Task<List<OperationResult<GatewayMessage>>> AddReactionToMessage(string channelId,
+            string messageId, IEnumerable<Emoji> emojis)
+        {
+            var result = new List<OperationResult<GatewayMessage>>();
+            foreach (var emocjiReactionRequest in emojis)
+            {
+                result.Add(await AddReactionToMessage(channelId, messageId, emocjiReactionRequest));
+
+                await Task.Delay(250);
+            }
+
+            return result;
+        }
+
+        public async Task<OperationResult<GatewayMessage>> AddReactionToMessage(string channelId, 
+            string messageId, Emoji emoji)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsync($"channels/{channelId}/messages/{messageId}/reactions/%3A{emoji.Name}%3A{emoji.Id}/@me", null);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogCritical("[RES] {0} {1} {2}", (int)response.StatusCode, response.ReasonPhrase,
+                        await response.Content.ReadAsStringAsync());
+
+                    if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                    {
+                        var rateLimit = JsonConvert.DeserializeObject<RateLimit>(
+                            await response.Content.ReadAsStringAsync());
+
+                        return await RetryPutReaction(rateLimit, channelId, messageId, emoji);
+                    }
+
+                    return new OperationResult<GatewayMessage>(null, response.StatusCode,
+                        response.ReasonPhrase, await response.Content.ReadAsStringAsync());
+                }
+                else
+                {
+                    return new OperationResult<GatewayMessage>(JsonConvert.DeserializeObject<GatewayMessage>(
+                        await response.Content.ReadAsStringAsync()), response.StatusCode,
+                        response.ReasonPhrase, string.Empty);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical("[ERR] Error during sending PUT request ", ex.Message);
+                throw;
+            }
+        }
     
         private async Task<OperationResult<GatewayMessage>> RetryPostMessage(RateLimit rateLimit,
             string channelId, Message message)
@@ -149,6 +206,17 @@ namespace Crabot.Rest.RestClient
             _logger.LogWarning("Retrying PATCH request after rate limit - {0}ms", retryAfter);
 
             return await EditMessage(channelId, messageId, message);
+        }
+
+        private async Task<OperationResult<GatewayMessage>> RetryPutReaction(RateLimit rateLimit,
+            string channelId, string messageId, Emoji emoji)
+        {
+            var retryAfter = (int)rateLimit.RetryAfter * 1000;
+            await Task.Delay(retryAfter);
+
+            _logger.LogWarning("Retrying PATCH request after rate limit - {0}ms", retryAfter);
+
+            return await AddReactionToMessage(channelId, messageId, emoji);
         }
     }
 }
