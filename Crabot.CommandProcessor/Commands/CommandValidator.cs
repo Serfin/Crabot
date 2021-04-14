@@ -18,5 +18,10 @@ namespace Crabot.Commands.Commands
                 && message.Content.TrimStart()[0] == '?'
                 && message.Author.Id != _clientInfoRepository.GetClientInfo().User.Id; // Disable bot possibility to handle own commands
         }
+
+        public bool IsBotAnAuthor(string userId)
+        {
+            return userId == _clientInfoRepository.GetClientInfo().User.Id;
+        }
     }
 }

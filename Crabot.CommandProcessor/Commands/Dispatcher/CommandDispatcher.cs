@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Autofac;
+using Crabot.Core.Repositories;
 using Microsoft.Extensions.Logging;
 
 namespace Crabot.Commands.Dispatcher
@@ -8,13 +9,16 @@ namespace Crabot.Commands.Dispatcher
 	public class CommandDispatcher : ICommandDispatcher
 	{
 		private readonly IComponentContext _component;
+		private readonly ITrackedMessageRepository _trackedMessageRepository;
         private readonly ILogger _logger;
 
         public CommandDispatcher(
-			IComponentContext component, 
+			IComponentContext component,
+			ITrackedMessageRepository trackedMessagesRepository,
 			ILogger<CommandDispatcher> logger)
         {
             _component = component;
+			_trackedMessageRepository = trackedMessagesRepository;
             _logger = logger;
         }
 
@@ -43,9 +47,37 @@ namespace Crabot.Commands.Dispatcher
             }
 		}
 
-        public Task DispatchAsync(Reaction reaction)
+        public async Task DispatchAsync(Reaction reaction)
         {
-            throw new NotImplementedException();
-        }
+			var trackedMessage = await _trackedMessageRepository
+				.GetTrackedMessageAsync(reaction.MessageId);
+
+			if (trackedMessage is null)
+            {
+				return;
+            }
+
+			try
+			{
+				var isRegistered = _component.IsRegisteredWithKey<IReactionHandler>(trackedMessage.Command);
+				if (!isRegistered)
+				{
+					//await _component.ResolveKeyed<ICommandHandler>("command-not-found")
+					//	.HandleAsync(command);
+
+					return;
+				}
+
+				await _component.ResolveKeyed<IReactionHandler>(trackedMessage.Command)
+					.HandleAsync(reaction);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError("Error during processing command: {0} \n {1}", ex.Message, ex.StackTrace);
+
+				//await _component.ResolveKeyed<ICommandHandler>("internal-application-error")
+				//	.HandleAsync(command);
+			}
+		}
     }
 }

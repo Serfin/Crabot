@@ -39,14 +39,20 @@ namespace Crabot.Commands
                 var reactionAdd = JsonConvert.DeserializeObject<MessageReactionAdd>(
                     reaction.EventData.ToString());
 
-                await _commandDispatcher.DispatchAsync(new Reaction(reactionAdd));
+                if (!_commandValidator.IsBotAnAuthor(reactionAdd.UserId))
+                {
+                    await _commandDispatcher.DispatchAsync(new Reaction(reactionAdd));
+                }
             }
             else // MESSAGE_REACTION_REMOVE
             {
                 var reactionRemove = JsonConvert.DeserializeObject<MessageReactionRemove>(
                     reaction.EventData.ToString());
 
-                await _commandDispatcher.DispatchAsync(new Reaction(reactionRemove));
+                if (!_commandValidator.IsBotAnAuthor(reactionRemove.UserId))
+                {
+                    await _commandDispatcher.DispatchAsync(new Reaction(reactionRemove));
+                }
             }
         }
     }
