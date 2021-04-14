@@ -46,7 +46,7 @@ namespace Crabot.Contracts
         public List<object> Embeds { get; set; }
 
         [JsonProperty("edited_timestamp")]
-        public object EditedTimestamp { get; set; }
+        public DateTime EditedTimestamp { get; set; }
 
         [JsonProperty("content")]
         public string Content { get; set; }
