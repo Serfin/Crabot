@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Reflection;
 using Autofac;
-using Autofac.Core;
 using Crabot.Commands;
 using Crabot.Commands.Commands;
 using Crabot.Commands.Dispatcher;
-using Crabot.Contracts;
-using Crabot.Core.Events;
+using Crabot.Commands.Handlers.Games.Blackjack;
 using Crabot.Core.Repositories;
 using Crabot.Gateway;
-using Crabot.Gateway.EventHandlers;
 using Crabot.Rest.RestClient;
 using Crabot.WebSocket;
 using Microsoft.Data.Sqlite;
@@ -99,7 +96,30 @@ namespace Crabot
             containerBuilder.RegisterAssemblyTypes(commandAssembly)
                 .Where(x => x.Name.EndsWith("CommandHandler"))
                 .Keyed(t => t.GetCustomAttribute<CommandAttribute>().CommandName, typeof(ICommandHandler))
-                .AsImplementedInterfaces()
+                .As<ICommandHandler>()
+                .InstancePerLifetimeScope();
+
+            return containerBuilder;
+        }
+
+        public static ContainerBuilder RegisterGameMenager(this ContainerBuilder containerBuilder)
+        {
+            containerBuilder.RegisterType<BlackjackRepository>()
+                .As<IBlackjackRepository>()
+                .SingleInstance();
+
+            return containerBuilder;
+        }
+
+        public static ContainerBuilder RegisterReactionHandlers(this ContainerBuilder containerBuilder)
+        {
+            var commandAssembly = typeof(CommandProcessor).Assembly;
+
+            // Register ICommandHandler as Handler with command name as Key for resolving
+            containerBuilder.RegisterAssemblyTypes(commandAssembly)
+                .Where(x => x.Name.EndsWith("CommandHandler"))
+                .Keyed(t => t.GetCustomAttribute<CommandAttribute>().CommandName, typeof(IReactionHandler))
+                .As<IReactionHandler>()
                 .InstancePerLifetimeScope();
 
             return containerBuilder;

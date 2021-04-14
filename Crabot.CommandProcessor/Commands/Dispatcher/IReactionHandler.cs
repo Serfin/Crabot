@@ -7,6 +7,3 @@ namespace Crabot.Commands.Dispatcher
         Task HandleAsync(Reaction reaction);
     }
 }
-
-
-// { message_id: [list of reactions should handle]}
