@@ -23,6 +23,16 @@ namespace Crabot.MessageExtensions
             return this;
         }
 
+        public EbmedMessageBuilder AddCustomAuthor(string name)
+        {
+            _embedMessage.Author = new EmbedAuthor
+            {
+                Name = name,
+            };
+
+            return this;
+        }
+
         public EbmedMessageBuilder AddMessageBody(string description)
         {
             _embedMessage.Description = description;
