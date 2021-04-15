@@ -5,7 +5,8 @@ using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Commands.Handlers.Games
 {
-    [Command("wallet")]
+    [Command("wallet", 0)]
+    [CommandUsage("?wallet")]
     public class WalletCommandHandler : ICommandHandler
     {
         private readonly IUserPointsRepository _userPointsRepository;
@@ -17,6 +18,11 @@ namespace Crabot.Commands.Commands.Handlers.Games
         {
             _userPointsRepository = userPointsRepository;
             _discordRestClient = discordRestClient;
+        }
+
+        public async Task<ValidationResult> ValidateCommandAsync(Command command)
+        {
+            return await Task.FromResult(new ValidationResult(true, string.Empty));
         }
 
         public async Task HandleAsync(Command command)

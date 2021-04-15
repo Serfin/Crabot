@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Crabot.Commands.Dispatcher;
 using Crabot.Core.Repositories;
@@ -11,7 +9,8 @@ using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Commands.Handlers.Games
 {
-    [Command("ranking")]
+    [Command("ranking", 0)]
+    [CommandUsage("?ranking")]
     public class RankingCommandHandler : ICommandHandler
     {
         private readonly IUserPointsRepository _userPointsRepository;
@@ -44,6 +43,11 @@ namespace Crabot.Commands.Commands.Handlers.Games
 
             await _discordRestClient.PostMessage(command.CalledFromChannel, 
                 new Message { Embed = embedMessage.Build() });
+        }
+
+        public Task<ValidationResult> ValidateCommandAsync(Command command)
+        {
+            return Task.FromResult(new ValidationResult(true));
         }
     }
 }

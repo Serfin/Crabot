@@ -8,7 +8,8 @@ using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Commands.Handlers.Games
 {
-    [Command("slots")]
+    [Command("slots", 1)]
+    [CommandUsage("?slots <amount-to-bet>")]
     public class SlotsCommandHandler : ICommandHandler
     {
         private readonly IUserPointsRepository _userPointsRepository;
@@ -188,6 +189,11 @@ namespace Crabot.Commands.Commands.Handlers.Games
             }
 
             return (true, string.Empty);
+        }
+
+        public async Task<ValidationResult> ValidateCommandAsync(Command command)
+        {
+            return await Task.FromResult(new ValidationResult(true));
         }
     }
 }

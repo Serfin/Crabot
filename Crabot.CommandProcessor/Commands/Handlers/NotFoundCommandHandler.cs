@@ -3,12 +3,11 @@ using System.Threading.Tasks;
 using Crabot.Commands.Commands;
 using Crabot.Commands.Dispatcher;
 using Crabot.Core.Repositories;
-using Crabot.Rest.Models;
 using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Handlers
 {
-    [Command("command-not-found")]
+    [Command("command-not-found", 0)]
     public class NotFoundCommandHandler : ICommandHandler
     {
         private readonly IDiscordRestClient _discordRestClient;
@@ -27,7 +26,12 @@ namespace Crabot.Commands.Handlers
                 .Emojis.FirstOrDefault(x => x.Name == "HuhChamp");
 
             await _discordRestClient.PostMessage(command.CalledFromChannel,
-                new Message { Content = $"Invalid command <:{huhChamp.Name}:{huhChamp.Id}>" });
+                "Invalid command <:{huhChamp.Name}:{huhChamp.Id}>");
+        }
+
+        public Task<ValidationResult> ValidateCommandAsync(Command command)
+        {
+            return Task.FromResult(new ValidationResult(true));
         }
     }
 }

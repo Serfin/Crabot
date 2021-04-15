@@ -6,10 +6,12 @@ namespace Crabot.Commands.Commands
     public sealed class CommandAttribute : Attribute
     {
         public readonly string CommandName;
+        public readonly int CommandArgsCount;
 
-        public CommandAttribute(string command)
+        public CommandAttribute(string command, int commandArgsCount)
         {
             CommandName = command;
+            CommandArgsCount = commandArgsCount;
         }
     }
 }

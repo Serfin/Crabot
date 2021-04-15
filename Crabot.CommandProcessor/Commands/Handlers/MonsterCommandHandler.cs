@@ -13,7 +13,8 @@ using ScrapySharp.Network;
 
 namespace Crabot.Commands.Commands.Handlers
 {
-    [Command("monster")]
+    [Command("monster", 0)]
+    [CommandUsage("?monster")]
     public class MonsterCommandHandler : ICommandHandler
     {
         private readonly IDiscordRestClient _discordRestClient;
@@ -89,6 +90,11 @@ namespace Crabot.Commands.Commands.Handlers
                     string.Format("{0} - [{1}] | {2}", offerThread.NewPrice, offerThread.Temperature, offerThread.Title),
                     string.Format("{0} \n\n {1} \n {2}", offerThread.Description, offerThread.Merchant, offerThread.Link), false);
             }
+        }
+
+        public Task<ValidationResult> ValidateCommandAsync(Command command)
+        {
+            return Task.FromResult(new ValidationResult(true));
         }
     }
 
