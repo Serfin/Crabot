@@ -30,7 +30,7 @@ namespace Crabot.Commands.Commands.Handlers.Games
 
         public async Task<ValidationResult> ValidateCommandAsync(Command command)
         {
-            if (await _userPointsRepository.CanUseDailyPoints(command.Author.Id))
+            if (!await _userPointsRepository.CanUseDailyPoints(command.Author.Id))
             {
                 return new ValidationResult(false, "You have used your free points in last 10 minutes");
             }
