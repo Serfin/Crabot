@@ -5,7 +5,8 @@ using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Commands.Handlers.Games
 {
-    [Command("register")]
+    [Command("register", 0)]
+    [CommandUsage("?register")]
     public class RegisterCommandHandler : ICommandHandler
     {
         private readonly IUserPointsRepository _userPointsRepository;
@@ -21,21 +22,22 @@ namespace Crabot.Commands.Commands.Handlers.Games
 
         public async Task HandleAsync(Command command)
         {
-            var userBalance = await _userPointsRepository.GetUserBalanceAsync(command.Author.Id);
+            await _userPointsRepository.AddUserToSystem(command.Author.Username,
+                command.Author.Id);
 
+            await _discordRestClient.PostMessage(command.CalledFromChannel, "Wallet created");
+        }
+
+        public async Task<ValidationResult> ValidateCommandAsync(Command command)
+        {
+            var userBalance = await _userPointsRepository.GetUserBalanceAsync(command.Author.Id);
+            
             if (userBalance is null)
             {
-                await _userPointsRepository.AddUserToSystem(command.Author.Username,
-                    command.Author.Id);
+                return new ValidationResult(false, "You alread own a wallet");
+            }
 
-                await _discordRestClient.PostMessage(command.CalledFromChannel,
-                   new Rest.Models.Message { Content = "Wallet created" });
-            }
-            else
-            {
-                await _discordRestClient.PostMessage(command.CalledFromChannel,
-                    new Rest.Models.Message { Content = "You alread own a wallet" });
-            }
+            return new ValidationResult(true);
         }
     }
 }

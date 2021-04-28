@@ -39,7 +39,10 @@ namespace Crabot
                 .AddLogging(builder =>
                 {
                     builder.ClearProviders();
-                    builder.AddSerilog(LoadLoggerConfiguration());
+                    builder.AddSerilog(
+                        new LoggerConfiguration()
+                            .ReadFrom.Configuration(_configuration)
+                            .CreateLogger());
                 })
                 .AddSingleton<CrabotClient>()
                 .AddSingleton<DiscordGatewayClient>()
@@ -64,17 +67,6 @@ namespace Crabot
             var container = containerBuilder.Build();
 
             return new AutofacServiceProvider(container);
-        }
-
-        private static Serilog.ILogger LoadLoggerConfiguration()
-        {
-            return new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-                .Enrich.FromLogContext()
-                .WriteTo.Console()
-                .WriteTo.File("logs\\Crabot.txt", rollingInterval: RollingInterval.Day)
-                .CreateLogger();
         }
 
         private static IConfiguration LoadConfiguration()

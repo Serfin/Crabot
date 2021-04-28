@@ -6,7 +6,8 @@ using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Commands.Handlers
 {
-    [Command("help")]
+    [Command("help", 0)]
+    [CommandUsage("?help")]
     public class HelpCommandHandler : ICommandHandler
     {
         private readonly IDiscordRestClient _discordRestClient;
@@ -29,6 +30,11 @@ namespace Crabot.Commands.Commands.Handlers
 
             await _discordRestClient.PostMessage(command.CalledFromChannel, 
                 new Message { Embed = embedMessage });
+        }
+
+        public Task<ValidationResult> ValidateCommandAsync(Command command)
+        {
+            return Task.FromResult(new ValidationResult(true));
         }
     }
 }

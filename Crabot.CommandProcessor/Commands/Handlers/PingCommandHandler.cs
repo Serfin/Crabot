@@ -7,7 +7,8 @@ using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Handlers
 {
-    [Command("ping")]
+    [Command("ping", 0)]
+    [CommandUsage("?ping")]
     public class PingCommandHandler : ICommandHandler
     {
         private readonly IDiscordRestClient _discordRestClient;
@@ -27,6 +28,11 @@ namespace Crabot.Commands.Handlers
 
             await _discordRestClient.EditMessage(command.CalledFromChannel,
                 response.Data.Id, new Message { Content = $"{latency.Milliseconds}ms" });
+        }
+
+        public async Task<ValidationResult> ValidateCommandAsync(Command command)
+        {
+            return await Task.FromResult(new ValidationResult(true));
         }
     }
 }

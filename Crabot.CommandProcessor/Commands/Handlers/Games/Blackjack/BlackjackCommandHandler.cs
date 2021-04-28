@@ -13,7 +13,8 @@ using Crabot.Rest.RestClient;
 
 namespace Crabot.Commands.Handlers.Games
 {
-    [Command("blackjack")]
+    [Command("blackjack", 1)]
+    [CommandUsage("?blackjack <bet-amount>")]
     public class BlackjackCommandHandler : ICommandHandler, IReactionHandler 
     {
         private readonly IDiscordRestClient _discordRestClient;
@@ -40,13 +41,6 @@ namespace Crabot.Commands.Handlers.Games
 
         public async Task HandleAsync(Command command)
         {
-            var validationResult = await ValidateCommand(command);
-            if (!validationResult.IsValid)
-            {
-                await DisplayValidationResult(command.CalledFromChannel, validationResult);
-                return;
-            }
-
             joinEmoji = GetEmoji(command.CalledFromGuild, "Join");
             startEmoji = GetEmoji(command.CalledFromGuild, "Stonks");
 
@@ -318,32 +312,6 @@ namespace Crabot.Commands.Handlers.Games
             
             return response.Data.Id;
         }
-
-        private async Task DisplayValidationResult(string channelId, ValidationResult validationResult)
-        {
-            await _discordRestClient.PostMessage(channelId, validationResult.ErrorMessage);
-        }
-
-        private async Task<ValidationResult> ValidateCommand(Command command)
-        {
-            if (command.Arguments.Count != 1)
-            {
-                return new ValidationResult(false, "Invalid amount of arguments - ?blackjack <amount_to_bet>");
-            }
-
-            if (!float.TryParse(command.Arguments[0], out float gameBounty) || gameBounty <= 0)
-            {
-                return new ValidationResult(false, "Invalid argument - ?blackjack <amount_to_bet>");
-            }
-
-            var userBalance = await _usersPointsRepository.GetUserBalanceAsync(command.Author.Id);
-            if (userBalance < gameBounty)
-            {
-                return new ValidationResult(false, "You don't have enough points to start gane - ?blackjack <amount_to_bet>");
-            }
-
-            return new ValidationResult(true, null);
-        }
     
         private string GetCardEmoji(string cardColor)
         {
@@ -366,6 +334,27 @@ namespace Crabot.Commands.Handlers.Games
             }
 
             return new Emoji { Name = emojiName, Id = "" };
+        }
+
+        public async Task<ValidationResult> ValidateCommandAsync(Command command)
+        {
+            if (command.Arguments.Count != 1)
+            {
+                return new ValidationResult(false, "Invalid amount of arguments - ?blackjack <amount_to_bet>");
+            }
+
+            if (!float.TryParse(command.Arguments[0], out float gameBounty) || gameBounty <= 0)
+            {
+                return new ValidationResult(false, "Invalid argument - ?blackjack <amount_to_bet>");
+            }
+
+            var userBalance = await _usersPointsRepository.GetUserBalanceAsync(command.Author.Id);
+            if (userBalance < gameBounty)
+            {
+                return new ValidationResult(false, "You don't have enough points to start gane - ?blackjack <amount_to_bet>");
+            }
+
+            return new ValidationResult(true, null);
         }
     }
 }
