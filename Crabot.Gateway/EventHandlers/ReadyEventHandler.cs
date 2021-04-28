@@ -1,7 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using Crabot.Contracts;
 using Crabot.Core.Events;
 using Crabot.Core.Repositories;
+using Crabot.MessageExtensions;
+using Crabot.Rest.RestClient;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -9,14 +12,15 @@ namespace Crabot.Gateway.EventHandlers
 {
     public class ReadyEventHandler : IGatewayEventHandler<ReadyEvent>
     {
+        private readonly IDiscordRestClient _discordRestClient;
         private readonly IClientInfoRepository _clientInfoRepository;
-        private readonly ILogger _logger;
 
-        public ReadyEventHandler(IClientInfoRepository clientInfoRepository, 
-            ILogger<ReadyEventHandler> logger)
+        public ReadyEventHandler(
+            IDiscordRestClient discordRestClient,
+            IClientInfoRepository clientInfoRepository)
         {
+            _discordRestClient = discordRestClient;
             _clientInfoRepository = clientInfoRepository;
-            _logger = logger;
         }
 
         public async Task HandleAsync(object @event)
@@ -28,9 +32,7 @@ namespace Crabot.Gateway.EventHandlers
 
             _clientInfoRepository.AddClientInfo(JsonConvert.DeserializeObject<ClientInfo>(@event.ToString()));
 
-            _logger.LogInformation("Session Id - {0}", _clientInfoRepository.GetClientInfo().SessionId);
-
-            await Task.CompletedTask;
+            await _discordRestClient.PostMessage("764840399696822322", "Ready to serve");
         }
     }
 }
