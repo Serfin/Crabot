@@ -41,7 +41,7 @@ namespace Crabot.Commands.Commands.Handlers
             catch (Exception ex)
             {
                 await _discordRestClient.PostMessage(command.CalledFromChannel,
-                    new Message { Content = string.Format("Wystąpił bład - {0}", ex.Message) });
+                    string.Format("Wystąpił bład - {0}", ex.Message));
             }
         }
 

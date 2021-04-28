@@ -34,8 +34,8 @@ namespace Crabot.Commands.Dispatcher
 					return;
 				}
 
-				var isRegistered = _component.IsRegisteredWithKey<ICommandHandler>(command.CommandName);
-				if (!isRegistered)
+				var isCommandRegistered = _component.IsRegisteredWithKey<ICommandHandler>(command.CommandName);
+				if (!isCommandRegistered)
 				{
 					await _component.ResolveKeyed<ICommandHandler>("command-not-found")
 						.HandleAsync(command);
