@@ -18,6 +18,7 @@
     <ProjectReference Include="..\Crabot.Core\Crabot.Core.csproj" />
     <ProjectReference Include="..\Crabot.MessageExtensions\Crabot.MessageExtensions.csproj" />
     <ProjectReference Include="..\Crabot.Rest\Crabot.Rest.csproj" />
+    <ProjectReference Include="..\Crabot.Voice\Crabot.Voice.csproj" />
   </ItemGroup>
 
 </Project>

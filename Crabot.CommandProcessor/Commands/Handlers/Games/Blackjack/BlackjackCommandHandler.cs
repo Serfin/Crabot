@@ -92,7 +92,6 @@ namespace Crabot.Commands.Handlers.Games
                 if (!game.IsInProgress)
                 {
                     var userBalance = await _usersPointsRepository.GetUserBalanceAsync(reaction.UserId);
-                    userBalance = 100000; // DEV
                     if (userBalance.Value >= game.BetAmount)
                     {
                         game.AddMember(reaction.UserId, reaction.Member.User.Username);

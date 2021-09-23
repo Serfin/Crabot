@@ -33,7 +33,7 @@ namespace Crabot.Rest.RestClient
                 if (gatewayUrlRequest.IsSuccessStatusCode)
                 {
                     var gatewayEvent = JsonConvert.DeserializeObject<GatewayUrl>(await gatewayUrlRequest.Content.ReadAsStringAsync());
-                    var gatewayUrl = string.Concat(gatewayEvent.Url, $"/?v=8&encoding=json");
+                    var gatewayUrl = string.Concat(gatewayEvent.Url, $"/?v=9&encoding=json");
 
                     _logger.LogInformation("Using Gateway URL - {0}", gatewayUrl);
 

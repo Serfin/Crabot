@@ -9,7 +9,6 @@ namespace Crabot.WebSocket
     {
         Task ConnectAsync(Uri address);
         Task DisconnectAsync(WebSocketCloseStatus socketCloseStatus);
-        Task RunAsync(CancellationToken cancellationToken);
         Task SendAsync(byte[] payload, bool isEoF);
         event Func<string, Task> MessageReceive;
     }

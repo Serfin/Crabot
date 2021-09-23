@@ -13,7 +13,7 @@ using Newtonsoft.Json;
 
 namespace Crabot.WebSocket
 {
-    public class ConnectionManager : IConnectionManager
+    public class EventGatewayConnection : IGatewayConnection
     {
         private readonly ILogger _logger;
         private readonly IDiscordSocketClient _discordSocketClient;
@@ -31,14 +31,13 @@ namespace Crabot.WebSocket
         private long _lastMessageTime;
         private int _latency;
 
-        public ConnectionManager(
-            ILogger<ConnectionManager> logger,
-            IDiscordSocketClient discordSocketClient,
+        public EventGatewayConnection(
+            ILogger<EventGatewayConnection> logger,
             IDiscordRestClient discordRestClient,
             IClientInfoRepository clientInfoRepository)
         {
             _logger = logger;
-            _discordSocketClient = discordSocketClient;
+            _discordSocketClient = new DiscordSocketClient();
             _discordSocketClient.MessageReceive += OnMessageReceive;
             _discordRestClient = discordRestClient;
             _clientInfoRepository = clientInfoRepository;
@@ -52,17 +51,17 @@ namespace Crabot.WebSocket
 
             if (payload.EventName is null)
             {
-                _logger.LogInformation("[{0}]", payload.Opcode.ToString().ToUpperInvariant());
+                _logger.LogInformation("[{0}]", (GatewayOpCode)payload.Opcode);
             }
             else
             {
-                _logger.LogInformation("[{0} - {1}]", payload.Opcode.ToString().ToUpperInvariant(), payload.EventName);
+                _logger.LogInformation("[{0} - {1}]", (GatewayOpCode)payload.Opcode, payload.EventName);
             }
 
             SetSequenceNumber(payload.SequenceNumber);
             _lastMessageTime = Environment.TickCount;
 
-            switch (payload.Opcode)
+            switch ((GatewayOpCode)payload.Opcode)
             {
                 case GatewayOpCode.Hello:
                     {
@@ -77,7 +76,7 @@ namespace Crabot.WebSocket
                 case GatewayOpCode.Reconnect:
                     {
                         CloseHeartbeating();
-                        await CreateConnectionAsync(WebSocketCloseStatus.NormalClosure);
+                        await StartConnectionAsync();
                     }
                     break;
                 case GatewayOpCode.Heartbeat:
@@ -86,7 +85,7 @@ namespace Crabot.WebSocket
 
                         var heartbeatEvent = new GatewayPayload
                         {
-                            Opcode = GatewayOpCode.Heartbeat,
+                            Opcode = (int)GatewayOpCode.Heartbeat,
                             EventData = _sequenceNumber ?? null,
                         };
 
@@ -113,7 +112,7 @@ namespace Crabot.WebSocket
                         CloseHeartbeating();
                         if (bool.TryParse(payload.EventData.ToString(), out bool canBeResumed) && canBeResumed)
                         {
-                            await CreateConnectionAsync(WebSocketCloseStatus.NormalClosure);
+                            await StartConnectionAsync();
                         }
                         else
                         {
@@ -121,7 +120,7 @@ namespace Crabot.WebSocket
                             _clientInfoRepository.DeleteClientInfo();
                             SetSequenceNumber(0);
                             await Task.Delay(new Random().Next(1, 6) * 1000);
-                            await CreateConnectionAsync(WebSocketCloseStatus.EndpointUnavailable);
+                            await StartConnectionAsync();
                         }
                     }
                     break;
@@ -137,7 +136,7 @@ namespace Crabot.WebSocket
             }
         }
 
-        public void SetSequenceNumber(int? sequenceNumber)
+        private void SetSequenceNumber(int? sequenceNumber)
         {
             if (sequenceNumber.HasValue)
             {
@@ -157,7 +156,7 @@ namespace Crabot.WebSocket
             _heartbeatTokenSource.Cancel(false);
         }
 
-        public async Task RunHeartbeat(int heartbeatInterval)
+        private async Task RunHeartbeat(int heartbeatInterval)
         {
             _logger.LogInformation("Starting heartbeating - interval {0}ms", heartbeatInterval);
 
@@ -168,7 +167,7 @@ namespace Crabot.WebSocket
                 {
                     _logger.LogCritical("Did not receive HeartbeatAck");
                     CloseHeartbeating();
-                    await CreateConnectionAsync(WebSocketCloseStatus.EndpointUnavailable);
+                    await StartConnectionAsync();
 
                     break;
                 }
@@ -177,7 +176,7 @@ namespace Crabot.WebSocket
 
                 var heartbeatEvent = new GatewayPayload
                 {
-                    Opcode = GatewayOpCode.Heartbeat,
+                    Opcode = (int)GatewayOpCode.Heartbeat,
                     EventData = _sequenceNumber ?? null,
                 };
 
@@ -194,7 +193,7 @@ namespace Crabot.WebSocket
         {
             var identityEvent = new GatewayPayload
             {
-                Opcode = GatewayOpCode.Identify,
+                Opcode = (int)GatewayOpCode.Identify,
                 EventData = new IdentifyEvent
                 {
                     Token = Environment.GetEnvironmentVariable("BOT_TOKEN"),
@@ -216,7 +215,7 @@ namespace Crabot.WebSocket
         {
             var resumeEvent = new GatewayPayload
             {
-                Opcode = GatewayOpCode.Resume,
+                Opcode = (int)GatewayOpCode.Resume,
                 EventData = new ResumeEvent
                 {
                     Token = Environment.GetEnvironmentVariable("BOT_TOKEN"),
@@ -229,7 +228,7 @@ namespace Crabot.WebSocket
             await _discordSocketClient.SendAsync(bytes, true);
         }
 
-        public async Task CreateConnectionAsync(WebSocketCloseStatus socketCloseStatus)
+        public async Task StartConnectionAsync()
         {
             var clientInfo = _clientInfoRepository.GetClientInfo();
             var gatewayUrl = await _discordRestClient.GetGatewayUrlAsync();
@@ -237,7 +236,7 @@ namespace Crabot.WebSocket
             if (clientInfo?.SessionId != null)
             {
                 // Resume session
-                await _discordSocketClient.DisconnectAsync(socketCloseStatus);
+                await _discordSocketClient.DisconnectAsync(WebSocketCloseStatus.NormalClosure);
                 await _discordSocketClient.ConnectAsync(new Uri(gatewayUrl));
                 await ResumeSession(clientInfo.SessionId);
             }
@@ -245,7 +244,7 @@ namespace Crabot.WebSocket
             {
                 // Create new session
                 // Disconnect client for safety (could be in connected state after InvalidSession event)
-                await _discordSocketClient.DisconnectAsync(socketCloseStatus);
+                await _discordSocketClient.DisconnectAsync(WebSocketCloseStatus.NormalClosure);
                 await _discordSocketClient.ConnectAsync(new Uri(gatewayUrl));
                 await IdentifyClient();
             }

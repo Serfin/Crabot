@@ -4,7 +4,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Crabot.WebSocket
 {
@@ -21,9 +21,9 @@ namespace Crabot.WebSocket
         private ClientWebSocket _client;
         private Task _task;
 
-        public DiscordSocketClient(ILogger<DiscordSocketClient> logger)
+        public DiscordSocketClient()
         {
-            _logger = logger;
+            _logger = Log.Logger;
 
             _cancelToken = CancellationToken.None;
             _parentToken = CancellationToken.None;
@@ -37,7 +37,7 @@ namespace Crabot.WebSocket
         public async Task ConnectAsync(Uri address)
         {
             await _socketLock.WaitAsync();
-            _logger.LogInformation($"Connecting to {address}...");
+            _logger.Information($"Connecting to {address}...");
 
             try
             {
@@ -57,7 +57,7 @@ namespace Crabot.WebSocket
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during connection opening!");
+                _logger.Error(ex, "Error during connection opening!");
             }
             finally
             {
@@ -77,7 +77,7 @@ namespace Crabot.WebSocket
             {
                 if (_client != null)
                 {
-                    _logger.LogWarning("Closing existing connection!");
+                    _logger.Warning("Closing existing connection!");
                     _cancelTokenSource.Cancel(false);
                     _disconnectTokenSource.Cancel(false);
 
@@ -87,12 +87,11 @@ namespace Crabot.WebSocket
                     _client = null;
                 }
 
-                //await (_task ?? Task.Delay(0));
                 _task = null;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during closing conncetion!");
+                _logger.Error(ex, "Error during closing conncetion!");
             }
             finally
             {
@@ -105,9 +104,9 @@ namespace Crabot.WebSocket
         /// </summary>
         /// <param name="cancelToken">Cancellation token</param>
         /// <returns>Listen on socket Task</returns>
-        public async Task RunAsync(CancellationToken cancelToken)
+        private async Task RunAsync(CancellationToken cancelToken)
         {
-            _logger.LogInformation("Listening on socket...");
+            _logger.Information("Listening on socket...");
 
             // Initial 16KB buffer
             var messageBuffer = new ArraySegment<byte>(new byte[ReceiveChunkSize]);
@@ -116,7 +115,7 @@ namespace Crabot.WebSocket
             {
                 while (!cancelToken.IsCancellationRequested)
                 {
-                    WebSocketReceiveResult socketResult = await _client.ReceiveAsync(messageBuffer, CancellationToken.None);
+                    var socketResult = await _client.ReceiveAsync(messageBuffer, CancellationToken.None);
 
                     byte[] longMessageBuffer;
                     int bufferLength;
@@ -129,30 +128,28 @@ namespace Crabot.WebSocket
 
                     if (!socketResult.EndOfMessage)
                     {
-                        using (var stream = new MemoryStream())
+                        using var stream = new MemoryStream();
+
+                        // Write initial 16KB of data to long message buffer
+                        stream.Write(messageBuffer.Array, 0, socketResult.Count);
+
+                        // Append more if there is not socket EOF
+                        do
                         {
-                            // Write initial 16KB of data to long message buffer
-                            stream.Write(messageBuffer.Array, 0, socketResult.Count);
-
-                            // Append more if there is not socket EOF
-                            do
+                            if (cancelToken.IsCancellationRequested)
                             {
-                                if (cancelToken.IsCancellationRequested)
-                                {
-                                    return;
-                                }
-
-                                socketResult = await _client.ReceiveAsync(messageBuffer, cancelToken).ConfigureAwait(false);
-                                stream.Write(messageBuffer.Array, 0, socketResult.Count);
+                                return;
                             }
-                            while (socketResult == null || !socketResult.EndOfMessage);
 
-                            bufferLength = (int)stream.Length;
-                            longMessageBuffer = stream.TryGetBuffer(out var streamBuffer) 
-                                ? streamBuffer.Array 
-                                : stream.ToArray();
-
+                            socketResult = await _client.ReceiveAsync(messageBuffer, cancelToken).ConfigureAwait(false);
+                            stream.Write(messageBuffer.Array, 0, socketResult.Count);
                         }
+                        while (socketResult == null || !socketResult.EndOfMessage);
+
+                        bufferLength = (int)stream.Length;
+                        longMessageBuffer = stream.TryGetBuffer(out var streamBuffer)
+                            ? streamBuffer.Array
+                            : stream.ToArray();
                     }
                     else
                     {
@@ -163,6 +160,7 @@ namespace Crabot.WebSocket
                     if (socketResult.MessageType == WebSocketMessageType.Text)
                     {
                         string text = Encoding.UTF8.GetString(longMessageBuffer, 0, bufferLength);
+                        _logger.Information("Recevied from WSS: {@text}", text);
                         await MessageReceive(text);
                     }
                     else
@@ -173,12 +171,12 @@ namespace Crabot.WebSocket
             }
             catch (WebSocketException scx)
             {
-                _logger.LogError(scx, "Socket is in 'Close' state");
+                _logger.Error(scx, "Socket is in 'Close' state");
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Cannot start listening on socket");
+                _logger.Error(ex, "Cannot start listening on socket");
                 throw;
             }
         }
@@ -208,11 +206,11 @@ namespace Crabot.WebSocket
                 await _client.SendAsync(new ArraySegment<byte>(payload), WebSocketMessageType.Text,
                     isEoF, _cancelToken);
 
-                _logger.LogInformation("Sending data - {0}", Encoding.UTF8.GetString(payload));
+                _logger.Information("Sending data - {0}", Encoding.UTF8.GetString(payload));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during sending event");
+                _logger.Error(ex, "Error during sending event");
             }
             finally
             {

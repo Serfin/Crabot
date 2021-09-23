@@ -26,7 +26,7 @@ namespace Crabot.Commands.Handlers
                 .Emojis.FirstOrDefault(x => x.Name == "HuhChamp");
 
             await _discordRestClient.PostMessage(command.CalledFromChannel,
-                "Invalid command <:{huhChamp.Name}:{huhChamp.Id}>");
+                $"Invalid command <:{huhChamp.Name}:{huhChamp.Id}>");
         }
 
         public Task<ValidationResult> ValidateCommandAsync(Command command)

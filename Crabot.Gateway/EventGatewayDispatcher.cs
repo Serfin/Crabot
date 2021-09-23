@@ -3,18 +3,21 @@ using Autofac;
 using Crabot.Commands;
 using Crabot.Contracts;
 using Crabot.Core.Events;
+using Crabot.Core.Events.Voice;
+using Crabot.WebSocket;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace Crabot.Gateway
 {
-    public class GatewayEventDispatcher : IGatewayEventDispatcher
+    public class EventGatewayDispatcher : IGatewayDispatcher
     {
         private readonly ILogger _logger;
         private readonly ICommandProcessor _commandProcessor;
         private readonly IComponentContext _componentContext;
 
-        public GatewayEventDispatcher(
-            ILogger<GatewayEventDispatcher> logger, 
+        public EventGatewayDispatcher(
+            ILogger<EventGatewayDispatcher> logger, 
             ICommandProcessor commandProcessor,
             IComponentContext componentContext)
         {
@@ -62,6 +65,21 @@ namespace Crabot.Gateway
                 case "RESUMED":
                     {
                         _logger.LogWarning("Session resumed!");
+                    }
+                    break;
+                case "VOICE_SERVER_UPDATE":
+                    {
+                        var parsed = JsonConvert.DeserializeObject<VoiceServerUpdate>(@event.EventData.ToString());
+                        _componentContext.Resolve<VoiceGatewayConnection>().SetVoiceServerUpdate(parsed);
+                    }
+                    break;
+                case "VOICE_STATE_UPDATE":
+                    {
+                        var parsed = JsonConvert.DeserializeObject<VoiceStateUpdate>(@event.EventData.ToString());
+                        _componentContext.Resolve<VoiceGatewayConnection>().SetVoiceStateUpdate(parsed);
+
+                        await _componentContext.ResolveNamed<IGatewayConnection>("voice-gateway-connection")
+                            .StartConnectionAsync();
                     }
                     break;
                 default:

@@ -28,7 +28,7 @@ namespace Crabot.Tests
             commandDispatcherMock = new Mock<ICommandDispatcher>();
             commandValidatorMock = new Mock<ICommandValidator>();
             commandProcessor = new CommandProcessor(commandDispatcherMock.Object,
-                commandValidatorMock.Object);
+                commandValidatorMock.Object, null);
         }
 
         [Test]

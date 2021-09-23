@@ -1,20 +1,30 @@
-﻿using System.Threading.Tasks;
+﻿using System.Net.WebSockets;
+using System.Threading.Tasks;
+using Autofac;
 using Crabot.Gateway;
+using Crabot.WebSocket;
 
 namespace Crabot
 {
     public class CrabotClient
     {
-        private readonly DiscordGatewayClient _discordGatewayClient;
+        private readonly IComponentContext _context;
+        private readonly IGatewayDispatcher _gatewayDiscordDispatcher;
 
-        public CrabotClient(DiscordGatewayClient discordGatewayClient)
+        public CrabotClient(
+            IComponentContext context,
+            IGatewayDispatcher gatewayDiscordDispatcher)
         {
-            _discordGatewayClient = discordGatewayClient;
+            _context = context;
+            _gatewayDiscordDispatcher = gatewayDiscordDispatcher;
         }
 
         public async Task StartAsync()
         {
-            await _discordGatewayClient.StartAsync();
+            var eventConnection = _context.ResolveNamed<IGatewayConnection>("event-gateway-connection");
+
+            eventConnection.EventReceive += _gatewayDiscordDispatcher.DispatchEvent;
+            await eventConnection.StartConnectionAsync();
         }
     }
 }

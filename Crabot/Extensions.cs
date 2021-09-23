@@ -17,12 +17,12 @@ namespace Crabot
 {
     internal static class Extensions
     {
-        internal static IServiceCollection AddDicordRestClient(this IServiceCollection services, 
+        internal static IServiceCollection AddDicordRestClient(this IServiceCollection services,
             IConfiguration configuration)
         {
             services.AddHttpClient<IDiscordRestClient, DiscordRestClient>(config =>
             {
-                config.BaseAddress = new Uri(string.Format(configuration["discordApiUrl"], 
+                config.BaseAddress = new Uri(string.Format(configuration["discordApiUrl"],
                     configuration["discordApiVersion"]));
                 config.DefaultRequestHeaders.Add("Authorization", string.Format("Bot {0}",
                     Environment.GetEnvironmentVariable("BOT_TOKEN")));
@@ -31,17 +31,12 @@ namespace Crabot
             return services;
         }
 
-        public static ContainerBuilder RegisterDiscordSocketClient(this ContainerBuilder containerBuilder)
-        {
-            containerBuilder.RegisterType<DiscordSocketClient>()
-                .As<IDiscordSocketClient>()
-                .SingleInstance();
-
-            return containerBuilder;
-        }
-
         public static ContainerBuilder RegisterGatewayEventHandlers(this ContainerBuilder containerBuilder)
         {
+            containerBuilder.RegisterType<EventGatewayDispatcher>()
+                .As<IGatewayDispatcher>()
+                .SingleInstance();
+
             containerBuilder.RegisterAssemblyTypes(typeof(IGatewayEventHandler<>).Assembly)
                 .AsClosedTypesOf(typeof(IGatewayEventHandler<>))
                 .InstancePerLifetimeScope();
@@ -70,6 +65,21 @@ namespace Crabot
             })
             .As<IUserPointsRepository>()
             .InstancePerLifetimeScope();
+
+            return containerBuilder;
+        }
+
+        public static ContainerBuilder RegisterGatewayConnections(this ContainerBuilder containerBuilder)
+        {
+            containerBuilder.RegisterType<EventGatewayConnection>()
+                .As<IGatewayConnection>()
+                .Named<IGatewayConnection>("event-gateway-connection")
+                .SingleInstance();
+
+            containerBuilder.RegisterType<VoiceGatewayConnection>()
+                .As<IGatewayConnection>()
+                .Named<IGatewayConnection>("voice-gateway-connection")
+                .SingleInstance();
 
             return containerBuilder;
         }

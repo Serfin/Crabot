@@ -5,7 +5,7 @@ namespace Crabot.Core.Events
     public class GatewayPayload
     {
         [JsonProperty("op")]
-        public GatewayOpCode Opcode { get; set; }
+        public int Opcode { get; set; }
 
         [JsonProperty("d")]
         public object EventData { get; set; }

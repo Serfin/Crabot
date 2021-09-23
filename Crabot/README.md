@@ -1,30 +1,12 @@
-# TODO
+# Attributes
 
-[DONE] - Improve logging on critical parts, closing long running tasks 
-[DONE] - Add external logging
-[DONE] - Resuming session
+[Command("blackjack", 1)] - marks command to be available for bot to find 
+	- eg. user now can use ?blackjakc command with exactyl 1 argument, under 
+	  the attribute there is a basic argument count validation
 
+[CommandUsage("?blackjack <bet-amount>")] - marks command as one for which user can find help 
+	- eg. ?help blackjack - returns ?blackjack <bet-amount>
 
-https://crabot.scm.azurewebsites.net/api/vfs/SystemDrive/local/Temp/jobs/continuous/deployedJob/
+Each command must implement ICommandHandler which under the hood executes ValidateCommandAsync()
 
-[] - Add parameters handling / maybe with attributes? [CommandAttributes("t", "d")]
-[] - Adding commands with attributes [Command("ping")]
-
-
-
-```
-
-
-	-> Register Commands marked with attribute
-
-	[Command("ping")]
-	PingCommand
-
-	-> Register CommandHandler for specific command
-
-	PingCommandHandler : ICommandHandler<PingCommand>
-	fn async Handle()
-
-	-> After received and validated message pass it to proper handler
-
-```
+There are internal commands whether there's an error with processing command or bot cannot find command with specified command name

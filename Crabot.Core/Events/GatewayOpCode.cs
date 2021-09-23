@@ -13,6 +13,8 @@
 
         StatusUpdate = 3,
 
+        VoiceStateUpdate = 4,
+
         // C -> S 
         // Send after opening new connection
         Resume = 6,
